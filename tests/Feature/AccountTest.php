@@ -97,4 +97,12 @@ class AccountTest extends TestCase
             ->assertHeader('X-Frame-Options', 'DENY')
             ->assertHeader('Referrer-Policy', 'no-referrer');
     }
+
+    public function test_export_e_import_son_stubs_501(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson('/api/export')->assertStatus(501);
+        $this->actingAs($user)->postJson('/api/import')->assertStatus(501);
+    }
 }

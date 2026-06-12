@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\EntryVersionController;
 use App\Http\Controllers\FolderController;
+use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\VaultController;
 use Illuminate\Support\Facades\Route;
@@ -46,4 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('account/master-password', [AccountController::class, 'updateMasterPassword'])->middleware('throttle:10,1');
     Route::patch('account/preferences', [AccountController::class, 'updatePreferences']);
+
+    // Roadmap (stubs 501): backup cifrado e import KeePass/CSV, ambos del lado cliente.
+    Route::get('export', [ImportExportController::class, 'export']);
+    Route::post('import', [ImportExportController::class, 'import']);
 });

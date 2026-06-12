@@ -1,59 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Secretos
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Gestor de contraseñas personal auto-hospedado con interfaz web y cifrado
+**zero-knowledge**: todo el cifrado ocurre en el navegador y el servidor solo
+almacena texto cifrado. Inspirado en KeePass2 y Dashlane, construido con
+Laravel 12 + Vue 3 + PrimeVue.
 
-## About Laravel
+## Modelo de seguridad
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+La contraseña maestra **nunca** sale del navegador ni se envía al servidor.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```
+contraseña maestra
+  │  Argon2id (salt por usuario, 64 MiB / 3 / 4)   ← hash-wasm, en el navegador
+  ▼
+masterKey (solo en memoria)
+  ├─ HKDF "secretos/v1/auth" → verifier   → al servidor (se re-hashea con Argon2id)
+  └─ HKDF "secretos/v1/wrap" → wrappingKey → solo en memoria
+vaultKey (32 bytes aleatorios, generados al registrarse)
+  └─ AES-256-GCM(wrappingKey) → protected_key   → guardado en el servidor
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Cada campo se cifra con **AES-256-GCM** (`v1.<iv>.<ciphertext>`), IV aleatorio
+  por operación, prefijo de versión para migraciones futuras.
+- El servidor guarda únicamente: hash del verifier, parámetros KDF + salt, la
+  `vaultKey` envuelta y los items como ciphertext + metadata mínima (favorito,
+  estructura de carpetas, timestamps).
+- Una contraseña incorrecta falla localmente (fallo del tag GCM), sin consultar
+  al servidor.
+- **No hay recuperación**: si olvidás la contraseña maestra, perdés la bóveda.
 
-## Learning Laravel
+## Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Backend**: Laravel 12, Sanctum (sesión cookie SPA), MySQL/MariaDB.
+- **Frontend**: Vue 3 + TypeScript + Vue Router + Pinia + PrimeVue 4 (tema Aura).
+- **Crypto**: `hash-wasm` (Argon2id) + WebCrypto (HKDF, AES-GCM); `zxcvbn-ts`
+  para el medidor de fortaleza.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Requisitos
 
-## Laravel Sponsors
+- PHP 8.4+, Composer 2, Node 22+, MySQL/MariaDB (incluidos en Laragon).
+- **Contexto seguro obligatorio**: WebCrypto solo existe en `https://` o
+  `http://localhost`. Usá `http://localhost:8000` en desarrollo (no
+  `secretos.test` por HTTP plano), o configurá HTTPS.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Puesta en marcha
 
-### Premium Partners
+```bash
+composer install
+npm install
+cp .env.example .env        # ya viene configurado para MySQL (BD: secretos)
+php artisan key:generate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# Crear la base y migrar (con el MySQL de Laragon corriendo)
+php artisan migrate
 
-## Contributing
+npm run build               # o `npm run dev` para HMR
+php artisan serve --port=8000
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Abrí **http://localhost:8000**, creá tu cuenta y empezá a guardar.
 
-## Code of Conduct
+> Si MySQL no está corriendo en Laragon, arrancalo desde el panel de Laragon
+> (o `mysqld --defaults-file=.../my.ini`).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Tests
 
-## Security Vulnerabilities
+```bash
+php artisan test     # backend (PHPUnit): auth, bóveda, versionado, cuenta
+npm test             # crypto (Vitest): KDF, cifrado, jerarquía de claves, generador
+npm run typecheck    # vue-tsc
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Scripts de verificación end-to-end contra la API viva (requieren `php artisan serve`):
 
-## License
+```bash
+npx vite-node scripts/verify-ceremony.ts          # registro/login/descifrado
+npx vite-node scripts/verify-vault.ts             # CRUD de bóveda
+npx vite-node scripts/verify-password-change.ts   # cambio de clave maestra
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Estructura
+
+```
+app/Http/Controllers   Auth, Vault, Entry, Folder, Tag, EntryVersion, Account
+app/Support            EntryVersioning (snapshots de historial)
+resources/js/crypto    kdf · keys · cipher · generator · strength · encoding
+resources/js/stores    auth · keychain (custodia de la vaultKey) · vault
+resources/js/pages     Login · Register · Unlock · Vault · Trash · Settings
+resources/js/components vault/* · generator/*
+```
+
+## Funcionalidades
+
+- Bóveda con entradas (título, usuario, contraseña, URL, notas), carpetas
+  jerárquicas, etiquetas, favoritos y campos personalizados (con flag protegido).
+- Búsqueda y filtros instantáneos (client-side, sobre datos descifrados).
+- Generador de contraseñas (CSPRNG, charset configurable, excluir ambiguos) y
+  medidor de fortaleza.
+- Copiar al portapapeles con auto-limpieza a los 30 s.
+- Papelera (borrado suave) e historial de versiones por entrada (estilo KeePass).
+- Auto-bloqueo por inactividad y al volver de suspensión; cambio de clave maestra
+  (re-envuelve la `vaultKey`, sin re-cifrar items).
+- Multi-usuario con bóvedas aisladas.
+
+## Roadmap
+
+- Almacenamiento de TOTP y generación de códigos 2FA.
+- Import desde KeePass (KDBX/CSV) y export de backup cifrado (en el cliente).
+- Reportes de salud de contraseñas (débiles/repetidas) y chequeo de filtraciones
+  vía HIBP con k-anonimato.
+- Adjuntos cifrados y compartición de entradas.
+
+## Notas de seguridad
+
+- El JS lo sirve el propio servidor: un servidor comprometido podría servir JS
+  malicioso. El modelo protege contra robo de BD/backups y snooping del hosting,
+  no contra un servidor totalmente comprometido (igual que cualquier bóveda web).
+- CSP estricta en producción; en local se omite para no romper el HMR de Vite.
