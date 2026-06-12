@@ -8,10 +8,11 @@ import Select from 'primevue/select';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
+import Popover from 'primevue/popover';
 import { useToast } from 'primevue/usetoast';
 
 import { useVaultStore, type DecryptedEntry, type EntryInput } from '@/stores/vault';
-import { generatePassword, DEFAULT_GENERATOR_OPTIONS } from '@/crypto/generator';
+import PasswordGenerator from '@/components/generator/PasswordGenerator.vue';
 
 const props = defineProps<{ visible: boolean; entry: DecryptedEntry | null }>();
 const emit = defineEmits<{ 'update:visible': [value: boolean] }>();
@@ -70,8 +71,15 @@ function close(): void {
     emit('update:visible', false);
 }
 
-function generate(): void {
-    form.password = generatePassword(DEFAULT_GENERATOR_OPTIONS);
+const genPopover = ref<InstanceType<typeof Popover>>();
+
+function toggleGenerator(event: Event): void {
+    genPopover.value?.toggle(event);
+}
+
+function onUseGenerated(password: string): void {
+    form.password = password;
+    genPopover.value?.hide();
 }
 
 function addCustomField(): void {
@@ -152,7 +160,10 @@ async function save(): Promise<void> {
                     <label class="text-sm font-medium">Contraseña</label>
                     <div class="flex gap-2">
                         <Password v-model="form.password" :feedback="false" toggle-mask input-class="w-full" class="flex-1" />
-                        <Button icon="pi pi-refresh" outlined v-tooltip.top="'Generar'" @click="generate" />
+                        <Button icon="pi pi-refresh" outlined v-tooltip.top="'Generar'" @click="toggleGenerator" />
+                        <Popover ref="genPopover">
+                            <PasswordGenerator @use="onUseGenerated" />
+                        </Popover>
                     </div>
                 </div>
             </div>

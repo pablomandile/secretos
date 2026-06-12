@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { AxiosError } from 'axios';
 import Button from 'primevue/button';
@@ -7,10 +7,9 @@ import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Message from 'primevue/message';
-import ProgressBar from 'primevue/progressbar';
 
 import { useAuthStore } from '@/stores/auth';
-import { estimateStrength } from '@/crypto/strength';
+import StrengthMeter from '@/components/generator/StrengthMeter.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -21,31 +20,8 @@ const password = ref('');
 const confirm = ref('');
 const loading = ref(false);
 const error = ref('');
-
 const score = ref(0);
-const warning = ref('');
-let strengthTimer: ReturnType<typeof setTimeout> | undefined;
 
-// Medidor de fortaleza con debounce (zxcvbn se carga de forma diferida).
-watch(password, (value) => {
-    clearTimeout(strengthTimer);
-    if (!value) {
-        score.value = 0;
-        warning.value = '';
-        return;
-    }
-    strengthTimer = setTimeout(async () => {
-        const result = await estimateStrength(value);
-        score.value = result.score;
-        warning.value = result.warning;
-    }, 250);
-});
-
-const STRENGTH_LABELS = ['Muy débil', 'Débil', 'Aceptable', 'Fuerte', 'Muy fuerte'];
-const STRENGTH_SEVERITY = ['danger', 'danger', 'warn', 'success', 'success'] as const;
-
-const strengthLabel = computed(() => STRENGTH_LABELS[score.value]);
-const strengthSeverity = computed(() => STRENGTH_SEVERITY[score.value]);
 const passwordsMatch = computed(() => password.value.length > 0 && password.value === confirm.value);
 const canSubmit = computed(() => email.value && passwordsMatch.value && score.value >= 3);
 
@@ -109,17 +85,7 @@ async function submit(): Promise<void> {
                             autocomplete="new-password"
                             required
                         />
-                        <template v-if="password">
-                            <ProgressBar
-                                :value="(score + 1) * 20"
-                                :show-value="false"
-                                :pt="{ value: { class: `bg-${strengthSeverity}` } }"
-                                style="height: 0.5rem"
-                            />
-                            <small :class="`text-${strengthSeverity}`">
-                                {{ strengthLabel }}<span v-if="warning"> — {{ warning }}</span>
-                            </small>
-                        </template>
+                        <StrengthMeter :password="password" @score="score = $event" />
                     </div>
 
                     <div class="flex flex-col gap-2">
