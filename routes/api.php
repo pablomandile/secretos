@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\EntryController;
+use App\Http\Controllers\FolderController;
+use App\Http\Controllers\TagController;
+use App\Http\Controllers\VaultController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -12,4 +16,21 @@ Route::prefix('auth')->group(function () {
         Route::get('session', [AuthController::class, 'session']);
         Route::post('logout', [AuthController::class, 'logout']);
     });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vault', [VaultController::class, 'index']);
+
+    Route::post('entries', [EntryController::class, 'store']);
+    Route::put('entries/{entry}', [EntryController::class, 'update']);
+    Route::patch('entries/{entry}', [EntryController::class, 'updateMeta']);
+    Route::delete('entries/{entry}', [EntryController::class, 'destroy']);
+
+    Route::post('folders', [FolderController::class, 'store']);
+    Route::put('folders/{folder}', [FolderController::class, 'update']);
+    Route::delete('folders/{folder}', [FolderController::class, 'destroy']);
+
+    Route::post('tags', [TagController::class, 'store']);
+    Route::put('tags/{tag}', [TagController::class, 'update']);
+    Route::delete('tags/{tag}', [TagController::class, 'destroy']);
 });
