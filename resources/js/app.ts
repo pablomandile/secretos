@@ -8,6 +8,8 @@ import 'primeicons/primeicons.css';
 
 import App from '@/App.vue';
 import router from '@/router';
+import { setUnauthorizedHandler } from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 
 // La bóveda depende de WebCrypto (AES-GCM, HKDF): solo existe en contextos
 // seguros (https o localhost). Sin él la app no puede funcionar.
@@ -21,8 +23,9 @@ if (!window.crypto?.subtle) {
 }
 
 const app = createApp(App);
+const pinia = createPinia();
 
-app.use(createPinia());
+app.use(pinia);
 app.use(router);
 app.use(PrimeVue, {
     theme: {
@@ -34,5 +37,12 @@ app.use(PrimeVue, {
 });
 app.use(ToastService);
 app.use(ConfirmationService);
+
+// Cuando el servidor responde 401, bloqueamos la bóveda y volvemos al login.
+const auth = useAuthStore(pinia);
+setUnauthorizedHandler(() => {
+    auth.handleUnauthorized();
+    router.push({ name: 'login' });
+});
 
 app.mount('#app');

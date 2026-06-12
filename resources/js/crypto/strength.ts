@@ -1,25 +1,27 @@
 /**
- * Medidor de fortaleza de contraseñas (zxcvbn-ts).
+ * Medidor de fortaleza de contraseñas (zxcvbn-ts v4).
  *
- * Los diccionarios pesan ~cientos de KB; se cargan de forma diferida (dynamic
- * import) y se configuran una sola vez.
+ * Los diccionarios pesan cientos de KB; se cargan de forma diferida (dynamic
+ * import) y el factory se construye una sola vez.
  */
 
-let configured = false;
+import type { ZxcvbnFactory } from '@zxcvbn-ts/core';
 
-async function ensureConfigured(): Promise<void> {
-    if (configured) return;
+let factory: ZxcvbnFactory | null = null;
+
+async function getFactory(): Promise<ZxcvbnFactory> {
+    if (factory) return factory;
     const [core, common, en] = await Promise.all([
         import('@zxcvbn-ts/core'),
         import('@zxcvbn-ts/language-common'),
         import('@zxcvbn-ts/language-en'),
     ]);
-    core.zxcvbnOptions.setOptions({
+    factory = new core.ZxcvbnFactory({
         dictionary: { ...common.dictionary, ...en.dictionary },
         graphs: common.adjacencyGraphs,
         translations: en.translations,
     });
-    configured = true;
+    return factory;
 }
 
 export interface StrengthResult {
@@ -30,13 +32,12 @@ export interface StrengthResult {
 }
 
 export async function estimateStrength(password: string): Promise<StrengthResult> {
-    await ensureConfigured();
-    const core = await import('@zxcvbn-ts/core');
-    const result = core.zxcvbn(password);
+    const zxcvbn = await getFactory();
+    const result = zxcvbn.check(password);
     return {
-        score: result.score as StrengthResult['score'],
+        score: result.score,
         warning: result.feedback.warning ?? '',
         suggestions: result.feedback.suggestions ?? [],
-        crackTimeDisplay: String(result.crackTimesDisplay.offlineSlowHashing1e4PerSecond),
+        crackTimeDisplay: String(result.crackTimes.offlineSlowHashingXPerSecond),
     };
 }

@@ -6,25 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name', 100)->nullable();
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-        });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+            // Hash server-side del *verifier* (derivado en el navegador). NUNCA la clave maestra.
+            $table->string('password');
+
+            // Parámetros KDF públicos: el cliente los necesita para re-derivar al loguear.
+            $table->unsignedTinyInteger('kdf_type')->default(1); // 1 = argon2id
+            $table->unsignedInteger('kdf_memory')->default(65536); // KiB
+            $table->unsignedSmallInteger('kdf_iterations')->default(3);
+            $table->unsignedTinyInteger('kdf_parallelism')->default(4);
+            $table->char('kdf_salt', 24); // base64 de 16 bytes, generado en el cliente
+
+            // vaultKey envuelta (ciphertext "v1.iv.ct"). El servidor no puede abrirla.
+            $table->text('protected_key');
+            $table->unsignedTinyInteger('key_version')->default(1);
+
+            // Preferencia en texto plano.
+            $table->unsignedSmallInteger('auto_lock_minutes')->default(5);
+
+            $table->timestamps();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -37,13 +43,9 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
 };

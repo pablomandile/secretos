@@ -5,41 +5,32 @@ namespace Database\Factories;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+    protected static ?string $verifier;
 
     /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
+     * Estado por defecto: valores con forma válida (no derivados de una clave real).
      */
     public function definition(): array
     {
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            // Hash de un verifier de 44 chars (placeholder).
+            'password' => static::$verifier ??= Hash::make(str_repeat('A', 43).'='),
+            'kdf_type' => 1,
+            'kdf_memory' => 65536,
+            'kdf_iterations' => 3,
+            'kdf_parallelism' => 4,
+            'kdf_salt' => base64_encode(random_bytes(16)),
+            'protected_key' => 'v1.'.base64_encode(random_bytes(12)).'.'.base64_encode(random_bytes(48)),
+            'key_version' => 1,
+            'auto_lock_minutes' => 5,
         ];
-    }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 }
