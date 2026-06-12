@@ -9,7 +9,11 @@ import { useVaultStore, type DecryptedEntry } from '@/stores/vault';
 import { useSecretClipboard } from '@/services/clipboard';
 
 const props = defineProps<{ visible: boolean; entry: DecryptedEntry | null }>();
-const emit = defineEmits<{ 'update:visible': [value: boolean]; edit: [entry: DecryptedEntry] }>();
+const emit = defineEmits<{
+    'update:visible': [value: boolean];
+    edit: [entry: DecryptedEntry];
+    history: [entry: DecryptedEntry];
+}>();
 
 const vault = useVaultStore();
 const confirm = useConfirm();
@@ -123,7 +127,8 @@ function confirmDelete(): void {
 
             <div class="mt-2 flex gap-2">
                 <Button label="Editar" icon="pi pi-pencil" class="flex-1" @click="emit('edit', props.entry)" />
-                <Button label="Eliminar" icon="pi pi-trash" severity="danger" outlined @click="confirmDelete" />
+                <Button icon="pi pi-history" severity="secondary" outlined v-tooltip.top="'Historial'" @click="emit('history', props.entry)" />
+                <Button icon="pi pi-trash" severity="danger" outlined v-tooltip.top="'Eliminar'" @click="confirmDelete" />
             </div>
         </div>
     </Drawer>

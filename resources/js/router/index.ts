@@ -31,6 +31,12 @@ const router = createRouter({
             component: () => import('@/pages/Vault.vue'),
             meta: { requiresAuth: true, requiresUnlocked: true },
         },
+        {
+            path: '/app/trash',
+            name: 'trash',
+            component: () => import('@/pages/Trash.vue'),
+            meta: { requiresAuth: true, requiresUnlocked: true },
+        },
     ],
 });
 

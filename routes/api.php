@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\EntryController;
+use App\Http\Controllers\EntryVersionController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\VaultController;
@@ -21,10 +22,18 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('vault', [VaultController::class, 'index']);
 
+    Route::get('trash', [EntryController::class, 'trash']);
+
     Route::post('entries', [EntryController::class, 'store']);
     Route::put('entries/{entry}', [EntryController::class, 'update']);
     Route::patch('entries/{entry}', [EntryController::class, 'updateMeta']);
     Route::delete('entries/{entry}', [EntryController::class, 'destroy']);
+    Route::post('entries/{entry}/restore', [EntryController::class, 'restore']);
+    Route::delete('entries/{entry}/force', [EntryController::class, 'forceDestroy']);
+
+    Route::get('entries/{entry}/versions', [EntryVersionController::class, 'index']);
+    Route::get('entries/{entry}/versions/{version}', [EntryVersionController::class, 'show']);
+    Route::post('entries/{entry}/versions/{version}/restore', [EntryVersionController::class, 'restore']);
 
     Route::post('folders', [FolderController::class, 'store']);
     Route::put('folders/{folder}', [FolderController::class, 'update']);

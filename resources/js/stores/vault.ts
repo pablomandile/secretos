@@ -66,6 +66,7 @@ export const useVaultStore = defineStore('vault', () => {
     const keychain = useKeychainStore();
 
     const entries = ref<DecryptedEntry[]>([]);
+    const trashed = ref<DecryptedEntry[]>([]);
     const folders = ref<DecryptedFolder[]>([]);
     const tags = ref<DecryptedTag[]>([]);
     const loaded = ref(false);
@@ -84,6 +85,7 @@ export const useVaultStore = defineStore('vault', () => {
 
     function reset(): void {
         entries.value = [];
+        trashed.value = [];
         folders.value = [];
         tags.value = [];
         loaded.value = false;
@@ -240,6 +242,68 @@ export const useVaultStore = defineStore('vault', () => {
         if (filter.value.type === 'tag' && filter.value.id === id) filter.value = { type: 'all' };
     }
 
+    // --- Papelera ---
+    async function loadTrash(): Promise<void> {
+        const { data } = await api.get('/trash');
+        trashed.value = await Promise.all((data.entries as any[]).map((e) => decryptEntry(e)));
+    }
+
+    async function restoreEntry(id: string): Promise<void> {
+        await api.post(`/entries/${id}/restore`);
+        const index = trashed.value.findIndex((e) => e.id === id);
+        if (index >= 0) {
+            const [entry] = trashed.value.splice(index, 1);
+            entries.value.push(entry);
+        }
+    }
+
+    async function purgeEntry(id: string): Promise<void> {
+        await api.delete(`/entries/${id}/force`);
+        trashed.value = trashed.value.filter((e) => e.id !== id);
+    }
+
+    // --- Historial de versiones ---
+    interface VersionMeta {
+        id: number;
+        version: number;
+        createdAt: string;
+    }
+
+    async function fetchVersions(entryId: string): Promise<VersionMeta[]> {
+        const { data } = await api.get(`/entries/${entryId}/versions`);
+        return (data.versions as any[]).map((v) => ({ id: v.id, version: v.version, createdAt: v.created_at }));
+    }
+
+    async function fetchVersionDetail(entryId: string, versionId: number) {
+        const { data } = await api.get(`/entries/${entryId}/versions/${versionId}`);
+        return {
+            id: data.id as number,
+            version: data.version as number,
+            createdAt: data.created_at as string,
+            title: await dec(data.title),
+            username: data.username ? await dec(data.username) : '',
+            password: data.password ? await dec(data.password) : '',
+            url: data.url ? await dec(data.url) : '',
+            notes: data.notes ? await dec(data.notes) : '',
+            customFields: await Promise.all(
+                (data.custom_fields ?? []).map(async (f: any) => ({
+                    label: await dec(f.label),
+                    value: await dec(f.value),
+                    type: f.type,
+                    protected: f.protected,
+                    position: f.position,
+                })),
+            ),
+        };
+    }
+
+    async function restoreVersion(entryId: string, versionId: number): Promise<DecryptedEntry> {
+        const { data } = await api.post(`/entries/${entryId}/versions/${versionId}/restore`);
+        const entry = await decryptEntry(data.data);
+        upsertEntry(entry);
+        return entry;
+    }
+
     const filteredEntries = computed<DecryptedEntry[]>(() => {
         let list = entries.value;
         const f = filter.value;
@@ -266,6 +330,7 @@ export const useVaultStore = defineStore('vault', () => {
 
     return {
         entries,
+        trashed,
         folders,
         tags,
         loaded,
@@ -287,5 +352,11 @@ export const useVaultStore = defineStore('vault', () => {
         createTag,
         deleteTag,
         tagById,
+        loadTrash,
+        restoreEntry,
+        purgeEntry,
+        fetchVersions,
+        fetchVersionDetail,
+        restoreVersion,
     };
 });

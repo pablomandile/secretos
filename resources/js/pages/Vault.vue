@@ -14,6 +14,7 @@ import FolderSidebar from '@/components/vault/FolderSidebar.vue';
 import EntryTable from '@/components/vault/EntryTable.vue';
 import EntryDialog from '@/components/vault/EntryDialog.vue';
 import EntryViewPanel from '@/components/vault/EntryViewPanel.vue';
+import VersionHistoryDialog from '@/components/vault/VersionHistoryDialog.vue';
 
 const auth = useAuthStore();
 const keychain = useKeychainStore();
@@ -23,6 +24,8 @@ const router = useRouter();
 const loading = ref(true);
 const dialogVisible = ref(false);
 const drawerVisible = ref(false);
+const historyVisible = ref(false);
+const historyEntryId = ref<string | null>(null);
 const editingEntry = ref<DecryptedEntry | null>(null);
 
 onMounted(async () => {
@@ -48,6 +51,12 @@ function openEdit(entry: DecryptedEntry): void {
     dialogVisible.value = true;
 }
 
+function openHistory(entry: DecryptedEntry): void {
+    historyEntryId.value = entry.id;
+    drawerVisible.value = false;
+    historyVisible.value = true;
+}
+
 async function lock(): Promise<void> {
     keychain.lock();
     await router.push({ name: 'unlock' });
@@ -71,6 +80,7 @@ async function logout(): Promise<void> {
                 <InputText v-model="vault.query" placeholder="Buscar…" class="w-full" />
             </IconField>
             <Button label="Nueva" icon="pi pi-plus" @click="openNew" />
+            <Button icon="pi pi-trash" severity="secondary" text rounded v-tooltip.bottom="'Papelera'" @click="router.push({ name: 'trash' })" />
             <Button icon="pi pi-lock" severity="secondary" text rounded v-tooltip.bottom="'Bloquear'" @click="lock" />
             <Button icon="pi pi-sign-out" severity="secondary" text rounded v-tooltip.bottom="'Cerrar sesión'" @click="logout" />
         </header>
@@ -87,6 +97,7 @@ async function logout(): Promise<void> {
         </div>
 
         <EntryDialog v-model:visible="dialogVisible" :entry="editingEntry" />
-        <EntryViewPanel v-model:visible="drawerVisible" :entry="vault.selectedEntry" @edit="openEdit" />
+        <EntryViewPanel v-model:visible="drawerVisible" :entry="vault.selectedEntry" @edit="openEdit" @history="openHistory" />
+        <VersionHistoryDialog v-model:visible="historyVisible" :entry-id="historyEntryId" />
     </div>
 </template>

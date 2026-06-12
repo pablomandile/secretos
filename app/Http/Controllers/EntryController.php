@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\EntryRequest;
 use App\Http\Resources\EntryResource;
 use App\Models\Entry;
+use App\Support\EntryVersioning;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -26,6 +27,9 @@ class EntryController extends Controller
     {
         $model = $request->user()->entries()->findOrFail($entry);
         $data = $request->validated();
+
+        // Snapshot del estado actual ANTES de modificar (historial estilo KeePass).
+        EntryVersioning::snapshot($model);
 
         $model->update($this->entryAttributes($data));
         $this->syncCustomFields($model, $data['custom_fields'] ?? []);
@@ -57,6 +61,31 @@ class EntryController extends Controller
     public function destroy(Request $request, string $entry): JsonResponse
     {
         $request->user()->entries()->findOrFail($entry)->delete();
+
+        return response()->json(null, 204);
+    }
+
+    /** Listado de la papelera (entradas con deleted_at). */
+    public function trash(Request $request): JsonResponse
+    {
+        $entries = $request->user()->entries()->onlyTrashed()
+            ->with(['customFields', 'tags:id'])->get();
+
+        return response()->json(['entries' => EntryResource::collection($entries)]);
+    }
+
+    public function restore(Request $request, string $entry): EntryResource
+    {
+        $model = $request->user()->entries()->onlyTrashed()->findOrFail($entry);
+        $model->restore();
+
+        return new EntryResource($model->load(['customFields', 'tags:id']));
+    }
+
+    /** Purga permanente desde la papelera (entrada + versiones, por cascade). */
+    public function forceDestroy(Request $request, string $entry): JsonResponse
+    {
+        $request->user()->entries()->withTrashed()->findOrFail($entry)->forceDelete();
 
         return response()->json(null, 204);
     }
