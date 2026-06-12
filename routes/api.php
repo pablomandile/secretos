@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\EntryVersionController;
@@ -42,4 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('tags', [TagController::class, 'store']);
     Route::put('tags/{tag}', [TagController::class, 'update']);
     Route::delete('tags/{tag}', [TagController::class, 'destroy']);
+
+    Route::put('account/master-password', [AccountController::class, 'updateMasterPassword'])->middleware('throttle:10,1');
+    Route::patch('account/preferences', [AccountController::class, 'updatePreferences']);
 });

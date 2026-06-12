@@ -11,6 +11,7 @@ import {
     unwrapVaultKey,
     wrapVaultKey,
 } from '@/crypto/keys';
+import { decryptBytes } from '@/crypto/cipher';
 import api, { ensureCsrfCookie } from '@/services/api';
 import { useKeychainStore } from '@/stores/keychain';
 
@@ -152,6 +153,59 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    /**
+     * Cambio de clave maestra: re-deriva con la actual, recupera la vaultKey en
+     * claro, la re-envuelve bajo la clave nueva y la envía. Los items NO se
+     * re-cifran (la vaultKey es la misma). La sesión actual sigue desbloqueada.
+     */
+    async function changeMasterPassword(currentPassword: string, newPassword: string): Promise<void> {
+        if (!kdfParams.value || !salt.value || !protectedKey.value) {
+            throw new Error('Falta el contexto de sesión');
+        }
+        const oldMaster = await deriveMasterKey(currentPassword, salt.value, kdfParams.value);
+        let rawVault: Uint8Array;
+        try {
+            const currentVerifier = await deriveAuthVerifier(oldMaster);
+            const oldWrap = await deriveWrappingKey(oldMaster);
+            // Lanza si la contraseña actual es incorrecta (fallo de tag GCM).
+            rawVault = await decryptBytes(oldWrap, protectedKey.value);
+
+            const newSalt = toBase64(crypto.getRandomValues(new Uint8Array(16)));
+            const kdf = DEFAULT_KDF_PARAMS;
+            const newMaster = await deriveMasterKey(newPassword, newSalt, kdf);
+            try {
+                const newVerifier = await deriveAuthVerifier(newMaster);
+                const newWrap = await deriveWrappingKey(newMaster);
+                const newProtected = await wrapVaultKey(newWrap, rawVault);
+
+                await api.put('/account/master-password', {
+                    current_verifier: currentVerifier,
+                    verifier: newVerifier,
+                    kdf_type: kdf.type,
+                    kdf_memory: kdf.memory,
+                    kdf_iterations: kdf.iterations,
+                    kdf_parallelism: kdf.parallelism,
+                    kdf_salt: newSalt,
+                    protected_key: newProtected,
+                });
+
+                kdfParams.value = kdf;
+                salt.value = newSalt;
+                protectedKey.value = newProtected;
+            } finally {
+                zero(newMaster);
+                zero(rawVault);
+            }
+        } finally {
+            zero(oldMaster);
+        }
+    }
+
+    async function updateAutoLock(minutes: number): Promise<void> {
+        await api.patch('/account/preferences', { auto_lock_minutes: minutes });
+        if (user.value) user.value.auto_lock_minutes = minutes;
+    }
+
     /** Invocado por el interceptor 401: la sesión murió del lado del servidor. */
     function handleUnauthorized(): void {
         keychain.lock();
@@ -170,6 +224,8 @@ export const useAuthStore = defineStore('auth', () => {
         fetchSession,
         unlock,
         logout,
+        changeMasterPassword,
+        updateAutoLock,
         handleUnauthorized,
     };
 });
