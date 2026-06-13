@@ -31,6 +31,13 @@ describe('parseCsv', () => {
             ['1', '2'],
         ]);
     });
+
+    it('descarta el BOM inicial para no romper el primer encabezado', () => {
+        const csv = '﻿"Account","Password"\n"GitHub","x"';
+        const rows = parseKeepassCsv(csv);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].title).toBe('GitHub'); // "Account" mapea aunque venga con BOM
+    });
 });
 
 describe('parseKeepassCsv', () => {

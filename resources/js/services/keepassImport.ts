@@ -16,6 +16,12 @@ export interface ImportRow {
 
 /** Parser CSV genérico → filas de campos. */
 export function parseCsv(text: string): string[][] {
+    // Descarta el BOM inicial (algunas exportaciones de KeePass lo incluyen);
+    // si no, el nombre de la primera columna no matchearía el encabezado.
+    if (text.charCodeAt(0) === 0xfeff) {
+        text = text.slice(1);
+    }
+
     const rows: string[][] = [];
     let row: string[] = [];
     let field = '';
