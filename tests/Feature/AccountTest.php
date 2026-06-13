@@ -95,7 +95,7 @@ class AccountTest extends TestCase
         $this->get('/login')
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertHeader('X-Frame-Options', 'DENY')
-            ->assertHeader('Referrer-Policy', 'no-referrer');
+            ->assertHeader('Referrer-Policy', 'same-origin');
     }
 
     public function test_export_e_import_son_stubs_501(): void

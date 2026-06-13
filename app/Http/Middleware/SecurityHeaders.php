@@ -14,7 +14,10 @@ class SecurityHeaders
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
-        $response->headers->set('Referrer-Policy', 'no-referrer');
+        // 'same-origin' (no 'no-referrer'): el SPA necesita mandar el Referer en
+        // sus requests del mismo origen para que Sanctum las detecte como stateful
+        // (los GET same-origin no llevan Origin). No se filtra referrer cross-origin.
+        $response->headers->set('Referrer-Policy', 'same-origin');
 
         // CSP estricta solo en producción: en local rompería el HMR de Vite.
         // 'unsafe-inline' en style-src porque PrimeVue inyecta estilos en línea.
