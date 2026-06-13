@@ -1,10 +1,31 @@
 @import 'tailwindcss';
 
+/* Modo oscuro por clase (.app-dark), alineado con el darkModeSelector de PrimeVue. */
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
 @source '../**/*.blade.php';
 @source '../**/*.vue';
 @source '../**/*.ts';
 
+/* Clases surface y primary de Tailwind mapeadas a las variables de PrimeVue
+   (definidas en runtime con prefijo --p-), para que bg-surface-100 y text-primary
+   funcionen y acompañen el tema. La escala surface es constante: las variantes
+   dark explícitas eligen los tonos oscuros. */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-primary: var(--p-primary-color);
+    --color-surface-0: var(--p-surface-0);
+    --color-surface-50: var(--p-surface-50);
+    --color-surface-100: var(--p-surface-100);
+    --color-surface-200: var(--p-surface-200);
+    --color-surface-300: var(--p-surface-300);
+    --color-surface-400: var(--p-surface-400);
+    --color-surface-500: var(--p-surface-500);
+    --color-surface-600: var(--p-surface-600);
+    --color-surface-700: var(--p-surface-700);
+    --color-surface-800: var(--p-surface-800);
+    --color-surface-900: var(--p-surface-900);
+    --color-surface-950: var(--p-surface-950);
 }

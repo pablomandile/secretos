@@ -116,8 +116,13 @@ resources/js/components vault/* · generator/*
 
 ## Roadmap
 
-- Almacenamiento de TOTP y generación de códigos 2FA.
-- Import desde KeePass (KDBX/CSV) y export de backup cifrado (en el cliente).
+Hecho: TOTP (códigos 2FA), import desde KeePass (CSV).
+
+Pendiente:
+- Modo oscuro (tema claro/oscuro con preferencia persistida).
+- Login con Google (Socialite) — autentica la sesión; el desbloqueo de la bóveda
+  sigue requiriendo la clave maestra para preservar el zero-knowledge.
+- Export de backup cifrado (en el cliente).
 - Reportes de salud de contraseñas (débiles/repetidas) y chequeo de filtraciones
   vía HIBP con k-anonimato.
 - Adjuntos cifrados y compartición de entradas.

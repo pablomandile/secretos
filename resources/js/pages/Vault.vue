@@ -15,6 +15,7 @@ import EntryTable from '@/components/vault/EntryTable.vue';
 import EntryDialog from '@/components/vault/EntryDialog.vue';
 import EntryViewPanel from '@/components/vault/EntryViewPanel.vue';
 import VersionHistoryDialog from '@/components/vault/VersionHistoryDialog.vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 
 const auth = useAuthStore();
 const keychain = useKeychainStore();
@@ -80,6 +81,7 @@ async function logout(): Promise<void> {
                 <InputText v-model="vault.query" placeholder="Buscar…" class="w-full" />
             </IconField>
             <Button label="Nueva" icon="pi pi-plus" @click="openNew" />
+            <ThemeToggle />
             <Button icon="pi pi-trash" severity="secondary" text rounded v-tooltip.bottom="'Papelera'" @click="router.push({ name: 'trash' })" />
             <Button icon="pi pi-cog" severity="secondary" text rounded v-tooltip.bottom="'Ajustes'" @click="router.push({ name: 'settings' })" />
             <Button icon="pi pi-lock" severity="secondary" text rounded v-tooltip.bottom="'Bloquear'" @click="lock" />

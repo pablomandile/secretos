@@ -7,6 +7,7 @@ import Password from 'primevue/password';
 import Message from 'primevue/message';
 
 import { useAuthStore } from '@/stores/auth';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -37,7 +38,8 @@ async function logout(): Promise<void> {
 </script>
 
 <template>
-    <div class="flex min-h-screen items-center justify-center bg-surface-100 p-4 dark:bg-surface-950">
+    <div class="relative flex min-h-screen items-center justify-center bg-surface-100 p-4 dark:bg-surface-950">
+        <div class="absolute right-4 top-4"><ThemeToggle /></div>
         <Card class="w-full max-w-md">
             <template #title>
                 <span class="flex items-center gap-2">
