@@ -7,12 +7,16 @@ import Card from 'primevue/card';
 import Password from 'primevue/password';
 import InputNumber from 'primevue/inputnumber';
 import Message from 'primevue/message';
+import ProgressBar from 'primevue/progressbar';
 import { useToast } from 'primevue/usetoast';
 
 import { useAuthStore } from '@/stores/auth';
+import { useVaultStore } from '@/stores/vault';
+import { parseKeepassCsv, type ImportRow } from '@/services/keepassImport';
 import StrengthMeter from '@/components/generator/StrengthMeter.vue';
 
 const auth = useAuthStore();
+const vault = useVaultStore();
 const router = useRouter();
 const toast = useToast();
 
@@ -57,6 +61,46 @@ async function saveAutoLock(): Promise<void> {
         toast.add({ severity: 'success', summary: 'Preferencia guardada', life: 2000 });
     } finally {
         savingPref.value = false;
+    }
+}
+
+// --- Importar desde KeePass (CSV) ---
+const fileInput = ref<HTMLInputElement>();
+const rows = ref<ImportRow[]>([]);
+const fileName = ref('');
+const importing = ref(false);
+const progress = ref(0);
+const importResult = ref<{ created: number; failed: number } | null>(null);
+
+function pickFile(): void {
+    fileInput.value?.click();
+}
+
+async function onFile(event: Event): Promise<void> {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    fileName.value = file.name;
+    importResult.value = null;
+    rows.value = parseKeepassCsv(await file.text());
+    if (!rows.value.length) {
+        toast.add({ severity: 'warn', summary: 'No se detectaron entradas', detail: 'Revisá que sea un CSV de KeePass.', life: 4000 });
+    }
+}
+
+async function runImport(): Promise<void> {
+    if (!rows.value.length) return;
+    importing.value = true;
+    progress.value = 0;
+    importResult.value = null;
+    try {
+        const result = await vault.importRows(rows.value, (done, total) => {
+            progress.value = Math.round((done / total) * 100);
+        });
+        importResult.value = result;
+        rows.value = [];
+        fileName.value = '';
+    } finally {
+        importing.value = false;
     }
 }
 </script>
@@ -106,6 +150,32 @@ async function saveAutoLock(): Promise<void> {
                             <InputNumber v-model="autoLock" :min="1" :max="120" show-buttons class="w-40" />
                         </div>
                         <Button label="Guardar" icon="pi pi-check" :loading="savingPref" @click="saveAutoLock" />
+                    </div>
+                </template>
+            </Card>
+
+            <Card>
+                <template #title>Importar desde KeePass (CSV)</template>
+                <template #content>
+                    <div class="flex flex-col gap-3">
+                        <p class="text-sm text-surface-600 dark:text-surface-300">
+                            En KeePass 2.x: <strong>Archivo → Exportar → CSV</strong>. Elegí el archivo acá; cada
+                            entrada se cifra en tu navegador antes de subir. Los grupos se convierten en carpetas.
+                        </p>
+                        <input ref="fileInput" type="file" accept=".csv,text/csv" class="hidden" @change="onFile" />
+                        <div class="flex flex-wrap items-center gap-3">
+                            <Button label="Elegir archivo CSV" icon="pi pi-upload" outlined @click="pickFile" />
+                            <span v-if="fileName" class="text-sm text-surface-600 dark:text-surface-300">
+                                {{ fileName }} — {{ rows.length }} entradas detectadas
+                            </span>
+                        </div>
+                        <template v-if="rows.length">
+                            <Button :label="`Importar ${rows.length} entradas`" icon="pi pi-check" :loading="importing" @click="runImport" />
+                            <ProgressBar v-if="importing" :value="progress" />
+                        </template>
+                        <Message v-if="importResult" severity="success" :closable="false">
+                            Importadas {{ importResult.created }}<span v-if="importResult.failed">, {{ importResult.failed }} fallidas</span>.
+                        </Message>
                     </div>
                 </template>
             </Card>

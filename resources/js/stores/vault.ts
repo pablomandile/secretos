@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 
 import api from '@/services/api';
 import { useKeychainStore } from '@/stores/keychain';
+import type { ImportRow } from '@/services/keepassImport';
 
 export interface DecryptedCustomField {
     label: string;
@@ -304,6 +305,48 @@ export const useVaultStore = defineStore('vault', () => {
         return entry;
     }
 
+    // --- Importación (KeePass CSV) ---
+    async function importRows(
+        rows: ImportRow[],
+        onProgress?: (done: number, total: number) => void,
+    ): Promise<{ created: number; failed: number }> {
+        // Crea (o reutiliza por nombre) las carpetas de los grupos.
+        const folderMap = new Map<string, string>();
+        for (const group of [...new Set(rows.map((r) => r.group).filter(Boolean))]) {
+            const existing = folders.value.find((f) => f.name === group);
+            if (existing) {
+                folderMap.set(group, existing.id);
+            } else {
+                await createFolder(group);
+                folderMap.set(group, folders.value[folders.value.length - 1].id);
+            }
+        }
+
+        let created = 0;
+        let failed = 0;
+        for (const r of rows) {
+            try {
+                await createEntry({
+                    type: 1,
+                    title: r.title || '(sin título)',
+                    username: r.username,
+                    password: r.password,
+                    url: r.url,
+                    notes: r.notes,
+                    favorite: false,
+                    folderId: r.group ? (folderMap.get(r.group) ?? null) : null,
+                    tagIds: [],
+                    customFields: r.totp ? [{ label: 'TOTP', value: r.totp, type: 3, protected: true }] : [],
+                });
+                created++;
+            } catch {
+                failed++;
+            }
+            onProgress?.(created + failed, rows.length);
+        }
+        return { created, failed };
+    }
+
     const filteredEntries = computed<DecryptedEntry[]>(() => {
         let list = entries.value;
         const f = filter.value;
@@ -358,5 +401,6 @@ export const useVaultStore = defineStore('vault', () => {
         fetchVersions,
         fetchVersionDetail,
         restoreVersion,
+        importRows,
     };
 });
