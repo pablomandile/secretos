@@ -102,6 +102,10 @@ Produce (carpeta `reports/`, ignorada por git):
 - `reports/phpunit.json` — resultado del backend (convertido del JUnit XML).
 - `reports/summary.json` — totales combinados + `ok`.
 
+**Tablero visual** (solo en `local`, fuera del SPA): con la app sirviendo, abrí
+**http://localhost:8000/test-report** — interpreta esos JSON y muestra el estado,
+totales por suite, fallos y el detalle por archivo. Recargá tras `npm run test:report`.
+
 Scripts de verificación end-to-end contra la API viva (requieren `php artisan serve`):
 
 ```bash
