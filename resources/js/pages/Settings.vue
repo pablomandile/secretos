@@ -12,7 +12,7 @@ import { useToast } from 'primevue/usetoast';
 
 import { useAuthStore } from '@/stores/auth';
 import { useVaultStore } from '@/stores/vault';
-import { parseKeepassCsv, type ImportRow } from '@/services/keepassImport';
+import { parseKeepassCsv, parseKeepassXml, type ImportRow } from '@/services/keepassImport';
 import StrengthMeter from '@/components/generator/StrengthMeter.vue';
 
 const auth = useAuthStore();
@@ -81,9 +81,17 @@ async function onFile(event: Event): Promise<void> {
     if (!file) return;
     fileName.value = file.name;
     importResult.value = null;
-    rows.value = parseKeepassCsv(await file.text());
+    const text = await file.text();
+    const isXml = file.name.toLowerCase().endsWith('.xml') || text.trimStart().startsWith('<?xml') || text.includes('<KeePassFile');
+    try {
+        rows.value = isXml ? parseKeepassXml(text) : parseKeepassCsv(text);
+    } catch {
+        rows.value = [];
+        toast.add({ severity: 'error', summary: 'No se pudo leer el archivo', detail: 'Formato no reconocido.', life: 4000 });
+        return;
+    }
     if (!rows.value.length) {
-        toast.add({ severity: 'warn', summary: 'No se detectaron entradas', detail: 'Revisá que sea un CSV de KeePass.', life: 4000 });
+        toast.add({ severity: 'warn', summary: 'No se detectaron entradas', detail: 'Revisá que sea un CSV o XML de KeePass.', life: 4000 });
     }
 }
 
@@ -155,14 +163,15 @@ async function runImport(): Promise<void> {
             </Card>
 
             <Card>
-                <template #title>Importar desde KeePass (CSV)</template>
+                <template #title>Importar desde KeePass (CSV o XML)</template>
                 <template #content>
                     <div class="flex flex-col gap-3">
                         <p class="text-sm text-surface-600 dark:text-surface-300">
-                            En KeePass 2.x: <strong>Archivo → Exportar → CSV</strong>. Elegí el archivo acá; cada
-                            entrada se cifra en tu navegador antes de subir. Los grupos se convierten en carpetas.
+                            En KeePass 2.x: <strong>Archivo → Exportar → KeePass XML (2.x)</strong> (conserva
+                            carpetas, TOTP y campos personalizados) o <strong>CSV</strong>. Elegí el archivo acá;
+                            cada entrada se cifra en tu navegador antes de subir.
                         </p>
-                        <input ref="fileInput" type="file" accept=".csv,text/csv" class="hidden" @change="onFile" />
+                        <input ref="fileInput" type="file" accept=".csv,.xml,text/csv,text/xml,application/xml" class="hidden" @change="onFile" />
                         <div class="flex flex-wrap items-center gap-3">
                             <Button label="Elegir archivo CSV" icon="pi pi-upload" outlined @click="pickFile" />
                             <span v-if="fileName" class="text-sm text-surface-600 dark:text-surface-300">

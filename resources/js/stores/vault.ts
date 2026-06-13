@@ -305,27 +305,50 @@ export const useVaultStore = defineStore('vault', () => {
         return entry;
     }
 
-    // --- Importación (KeePass CSV) ---
+    // --- Importación (KeePass CSV / XML) ---
     async function importRows(
         rows: ImportRow[],
         onProgress?: (done: number, total: number) => void,
     ): Promise<{ created: number; failed: number }> {
-        // Crea (o reutiliza por nombre) las carpetas de los grupos.
-        const folderMap = new Map<string, string>();
-        for (const group of [...new Set(rows.map((r) => r.group).filter(Boolean))]) {
-            const existing = folders.value.find((f) => f.name === group);
-            if (existing) {
-                folderMap.set(group, existing.id);
-            } else {
-                await createFolder(group);
-                folderMap.set(group, folders.value[folders.value.length - 1].id);
+        // Asegura la cadena de carpetas para una ruta "A/B/C" (crea o reutiliza
+        // cada nivel por nombre+padre) y devuelve el id de la carpeta hoja.
+        const pathToId = new Map<string, string>();
+        const ensureFolderPath = async (path: string): Promise<string | null> => {
+            if (!path) return null;
+            let parentId: string | null = null;
+            let acc = '';
+            for (const segment of path.split('/')) {
+                acc = acc ? `${acc}/${segment}` : segment;
+                let id = pathToId.get(acc);
+                if (!id) {
+                    const existing = folders.value.find((f) => f.name === segment && f.parentId === parentId);
+                    if (existing) {
+                        id = existing.id;
+                    } else {
+                        await createFolder(segment, parentId);
+                        id = folders.value[folders.value.length - 1].id;
+                    }
+                    pathToId.set(acc, id);
+                }
+                parentId = id;
             }
-        }
+            return parentId;
+        };
 
         let created = 0;
         let failed = 0;
         for (const r of rows) {
             try {
+                const folderId = await ensureFolderPath(r.group);
+                const customFields = [
+                    ...r.customFields.map((f) => ({
+                        label: f.label,
+                        value: f.value,
+                        type: f.protected ? 2 : 1,
+                        protected: f.protected,
+                    })),
+                    ...(r.totp ? [{ label: 'TOTP', value: r.totp, type: 3, protected: true }] : []),
+                ];
                 await createEntry({
                     type: 1,
                     title: r.title || '(sin título)',
@@ -334,9 +357,9 @@ export const useVaultStore = defineStore('vault', () => {
                     url: r.url,
                     notes: r.notes,
                     favorite: false,
-                    folderId: r.group ? (folderMap.get(r.group) ?? null) : null,
+                    folderId,
                     tagIds: [],
-                    customFields: r.totp ? [{ label: 'TOTP', value: r.totp, type: 3, protected: true }] : [],
+                    customFields,
                 });
                 created++;
             } catch {

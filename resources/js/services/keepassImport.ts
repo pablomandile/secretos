@@ -4,7 +4,14 @@
  * antes de subir. El parser sigue RFC 4180 (comillas, comas y saltos embebidos).
  */
 
+export interface ImportCustomField {
+    label: string;
+    value: string;
+    protected: boolean;
+}
+
 export interface ImportRow {
+    /** Ruta de carpeta separada por "/" (vacío = sin carpeta). */
     group: string;
     title: string;
     username: string;
@@ -12,6 +19,7 @@ export interface ImportRow {
     url: string;
     notes: string;
     totp: string;
+    customFields: ImportCustomField[];
 }
 
 /** Parser CSV genérico → filas de campos. */
@@ -130,5 +138,87 @@ export function parseKeepassCsv(text: string): ImportRow[] {
             url: get(cols, 'url'),
             notes: get(cols, 'notes'),
             totp: get(cols, 'totp'),
+            customFields: [],
         }));
+}
+
+// ---------------------------------------------------------------------------
+// Import desde el XML nativo de KeePass 2.x (trae jerarquía de carpetas, TOTP y
+// campos personalizados). Los valores en el XML exportado están en texto plano.
+// ---------------------------------------------------------------------------
+
+const STANDARD_KEYS = new Set(['Title', 'UserName', 'Password', 'URL', 'Notes']);
+const TOTP_KEYS = new Set(['otp', 'TOTP', 'TimeOtp-Secret-Base32']);
+
+function directChildren(el: Element, tag: string): Element[] {
+    return Array.from(el.children).filter((c) => c.tagName === tag);
+}
+
+function directChild(el: Element, tag: string): Element | null {
+    return directChildren(el, tag)[0] ?? null;
+}
+
+function xmlEntryToRow(entryEl: Element, group: string): ImportRow {
+    const values: Record<string, string> = {};
+    const protectedKeys = new Set<string>();
+
+    // Solo los <String> DIRECTOS de la entrada (no los del <History>).
+    for (const s of directChildren(entryEl, 'String')) {
+        const key = directChild(s, 'Key')?.textContent ?? '';
+        const valueEl = directChild(s, 'Value');
+        values[key] = valueEl?.textContent ?? '';
+        if (valueEl?.getAttribute('ProtectInMemory') === 'True' || valueEl?.getAttribute('Protected') === 'True') {
+            protectedKeys.add(key);
+        }
+    }
+
+    const customFields: ImportCustomField[] = Object.keys(values)
+        .filter((k) => !STANDARD_KEYS.has(k) && !TOTP_KEYS.has(k) && values[k] !== '')
+        .map((k) => ({ label: k, value: values[k], protected: protectedKeys.has(k) }));
+
+    return {
+        group,
+        title: values.Title ?? '',
+        username: values.UserName ?? '',
+        password: values.Password ?? '',
+        url: values.URL ?? '',
+        notes: values.Notes ?? '',
+        totp: values.otp || values.TOTP || values['TimeOtp-Secret-Base32'] || '',
+        customFields,
+    };
+}
+
+export function parseKeepassXml(xml: string): ImportRow[] {
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    if (doc.querySelector('parsererror')) {
+        throw new Error('XML inválido');
+    }
+
+    // La papelera de KeePass se identifica por UUID; sus entradas no se importan.
+    const recycleBinUuid = doc.querySelector('Meta > RecycleBinUUID')?.textContent?.trim() || null;
+    const root = doc.querySelector('KeePassFile > Root');
+    if (!root) return [];
+
+    const rows: ImportRow[] = [];
+
+    const walk = (groupEl: Element, path: string[]): void => {
+        const uuid = directChild(groupEl, 'UUID')?.textContent?.trim();
+        if (uuid && uuid === recycleBinUuid) return;
+
+        for (const entryEl of directChildren(groupEl, 'Entry')) {
+            rows.push(xmlEntryToRow(entryEl, path.join('/')));
+        }
+        for (const sub of directChildren(groupEl, 'Group')) {
+            const name = directChild(sub, 'Name')?.textContent ?? '';
+            walk(sub, [...path, name]);
+        }
+    };
+
+    // El grupo raíz (nombre de la base) NO se agrega al path: sus entradas quedan
+    // sin carpeta y sus subgrupos son las carpetas de primer nivel.
+    for (const top of directChildren(root, 'Group')) {
+        walk(top, []);
+    }
+
+    return rows;
 }
