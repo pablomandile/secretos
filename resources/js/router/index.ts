@@ -49,6 +49,12 @@ const router = createRouter({
             component: () => import('@/pages/Settings.vue'),
             meta: { requiresAuth: true, requiresUnlocked: true },
         },
+        {
+            path: '/app/health',
+            name: 'health',
+            component: () => import('@/pages/HealthReport.vue'),
+            meta: { requiresAuth: true, requiresUnlocked: true },
+        },
     ],
 });
 

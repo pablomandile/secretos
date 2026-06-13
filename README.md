@@ -137,12 +137,12 @@ resources/js/components vault/* · generator/*
 ## Roadmap
 
 Hecho: TOTP (códigos 2FA), import desde KeePass (CSV y XML —el XML conserva
-carpetas, TOTP y campos personalizados—), modo oscuro, login con Google.
+carpetas, TOTP y campos personalizados—), modo oscuro, login con Google,
+salud de contraseñas (débiles/repetidas).
 
 Pendiente:
 - Export de backup cifrado (en el cliente).
-- Reportes de salud de contraseñas (débiles/repetidas) y chequeo de filtraciones
-  vía HIBP con k-anonimato.
+- Chequeo de filtraciones vía HIBP con k-anonimato.
 - Adjuntos cifrados y compartición de entradas.
 
 ## Notas de seguridad

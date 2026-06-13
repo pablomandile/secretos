@@ -34,6 +34,10 @@ onMounted(async () => {
         await vault.load();
     }
     loading.value = false;
+    // Si venimos de otra vista con una entrada seleccionada (p.ej. Salud), la abrimos.
+    if (vault.selectedId) {
+        drawerVisible.value = true;
+    }
 });
 
 function openNew(): void {
@@ -82,6 +86,7 @@ async function logout(): Promise<void> {
             </IconField>
             <Button label="Nueva" icon="pi pi-plus" @click="openNew" />
             <ThemeToggle />
+            <Button icon="pi pi-shield" severity="secondary" text rounded v-tooltip.bottom="'Salud de contraseñas'" @click="router.push({ name: 'health' })" />
             <Button icon="pi pi-trash" severity="secondary" text rounded v-tooltip.bottom="'Papelera'" @click="router.push({ name: 'trash' })" />
             <Button icon="pi pi-cog" severity="secondary" text rounded v-tooltip.bottom="'Ajustes'" @click="router.push({ name: 'settings' })" />
             <Button icon="pi pi-lock" severity="secondary" text rounded v-tooltip.bottom="'Bloquear'" @click="lock" />
