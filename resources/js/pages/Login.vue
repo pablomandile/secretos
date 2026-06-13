@@ -73,6 +73,19 @@ async function submit(): Promise<void> {
 
                     <Button type="submit" label="Desbloquear" icon="pi pi-unlock" :loading="loading" />
 
+                    <div class="flex items-center gap-2 text-xs text-surface-400">
+                        <span class="h-px flex-1 bg-surface-200 dark:bg-surface-700" /> o
+                        <span class="h-px flex-1 bg-surface-200 dark:bg-surface-700" />
+                    </div>
+                    <Button
+                        type="button"
+                        label="Continuar con Google"
+                        icon="pi pi-google"
+                        severity="secondary"
+                        outlined
+                        @click="auth.loginWithGoogle()"
+                    />
+
                     <p class="text-center text-sm text-surface-500">
                         ¿No tenés cuenta?
                         <RouterLink :to="{ name: 'register' }" class="text-primary hover:underline">

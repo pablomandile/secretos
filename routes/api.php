@@ -18,6 +18,7 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('session', [AuthController::class, 'session']);
         Route::post('logout', [AuthController::class, 'logout']);
+        Route::post('setup-key', [AuthController::class, 'setupKey']);
     });
 });
 

@@ -26,6 +26,12 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
+            path: '/setup',
+            name: 'setup',
+            component: () => import('@/pages/SetupKey.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/app',
             name: 'vault',
             component: () => import('@/pages/Vault.vue'),
@@ -56,13 +62,21 @@ router.beforeEach(async (to) => {
     }
 
     const authed = auth.isAuthenticated;
+    const needsSetup = auth.needsSetup; // sesión activa pero sin bóveda configurada
     const unlocked = !keychain.isLocked;
 
     if (to.meta.guest && authed) {
-        return unlocked ? { name: 'vault' } : { name: 'unlock' };
+        return needsSetup ? { name: 'setup' } : unlocked ? { name: 'vault' } : { name: 'unlock' };
     }
     if (to.meta.requiresAuth && !authed) {
         return { name: 'login' };
+    }
+    // Setup tiene prioridad: cuenta autenticada (p.ej. vía Google) sin clave maestra.
+    if (needsSetup && to.name !== 'setup') {
+        return { name: 'setup' };
+    }
+    if (!needsSetup && to.name === 'setup') {
+        return unlocked ? { name: 'vault' } : { name: 'unlock' };
     }
     if (to.meta.requiresUnlocked && !unlocked) {
         return { name: 'unlock' };

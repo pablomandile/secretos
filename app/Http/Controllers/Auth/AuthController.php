@@ -98,6 +98,40 @@ class AuthController extends Controller
         return response()->json(null, 204);
     }
 
+    /**
+     * Setup de clave maestra para una cuenta sin bóveda (típicamente creada vía
+     * Google). El cliente deriva todo y manda verifier + vaultKey envuelta.
+     */
+    public function setupKey(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->protected_key) {
+            abort(409, 'La bóveda ya está configurada.');
+        }
+
+        $data = $request->validate([
+            'kdf_type' => ['required', 'integer', 'in:1'],
+            'kdf_memory' => ['required', 'integer', 'min:8192', 'max:1048576'],
+            'kdf_iterations' => ['required', 'integer', 'min:1', 'max:10'],
+            'kdf_parallelism' => ['required', 'integer', 'min:1', 'max:16'],
+            'kdf_salt' => ['required', 'string', 'size:24', 'regex:/^[A-Za-z0-9+\/=]+$/'],
+            'verifier' => ['required', 'string', 'size:44', 'regex:/^[A-Za-z0-9+\/=]+$/'],
+            'protected_key' => ['required', 'string', 'regex:/^v\d+\.[A-Za-z0-9+\/=]+\.[A-Za-z0-9+\/=]+$/'],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($data['verifier']),
+            'kdf_type' => $data['kdf_type'],
+            'kdf_memory' => $data['kdf_memory'],
+            'kdf_iterations' => $data['kdf_iterations'],
+            'kdf_parallelism' => $data['kdf_parallelism'],
+            'kdf_salt' => $data['kdf_salt'],
+            'protected_key' => $data['protected_key'],
+        ]);
+
+        return response()->json($this->sessionPayload($user));
+    }
+
     private function sessionPayload(User $user): array
     {
         return [

@@ -63,6 +63,26 @@ Abrí **http://localhost:8000**, creá tu cuenta y empezá a guardar.
 > Si MySQL no está corriendo en Laragon, arrancalo desde el panel de Laragon
 > (o `mysqld --defaults-file=.../my.ini`).
 
+### Login con Google (opcional)
+
+Google **autentica** la sesión; el desbloqueo de la bóveda sigue pidiendo la clave
+maestra (zero-knowledge intacto). La primera vez que entrás con Google, configurás
+tu clave maestra. Para habilitarlo:
+
+1. En [Google Cloud Console](https://console.cloud.google.com/) creá un OAuth Client ID
+   (tipo "Web application").
+2. Authorized redirect URI: `http://localhost:8000/auth/google/callback`.
+3. Poné las credenciales en `.env`:
+
+```
+GOOGLE_CLIENT_ID=tu-client-id
+GOOGLE_CLIENT_SECRET=tu-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+```
+
+Sin credenciales, la app funciona igual con email + clave maestra; el botón de Google
+solo aplica si configurás lo anterior.
+
 ## Tests
 
 ```bash
@@ -116,12 +136,9 @@ resources/js/components vault/* · generator/*
 
 ## Roadmap
 
-Hecho: TOTP (códigos 2FA), import desde KeePass (CSV).
+Hecho: TOTP (códigos 2FA), import desde KeePass (CSV), modo oscuro, login con Google.
 
 Pendiente:
-- Modo oscuro (tema claro/oscuro con preferencia persistida).
-- Login con Google (Socialite) — autentica la sesión; el desbloqueo de la bóveda
-  sigue requiriendo la clave maestra para preservar el zero-knowledge.
 - Export de backup cifrado (en el cliente).
 - Reportes de salud de contraseñas (débiles/repetidas) y chequeo de filtraciones
   vía HIBP con k-anonimato.

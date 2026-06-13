@@ -59,6 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
     const ready = ref(false); // true cuando ya consultamos /session al arrancar
 
     const isAuthenticated = computed(() => user.value !== null);
+    // Autenticado pero sin bóveda configurada (típico de una cuenta nueva vía Google).
+    const needsSetup = computed(() => isAuthenticated.value && !protectedKey.value);
 
     function applySession(data: SessionPayload): void {
         user.value = data.user;
@@ -133,6 +135,44 @@ export const useAuthStore = defineStore('auth', () => {
             reset();
         } finally {
             ready.value = true;
+        }
+    }
+
+    /** Redirige a Google (Socialite). Vuelve a /app y el router enruta a setup/unlock. */
+    function loginWithGoogle(): void {
+        window.location.href = '/auth/google/redirect';
+    }
+
+    /**
+     * Setup de clave maestra para una cuenta sin bóveda (creada vía Google).
+     * Misma ceremonia que el registro pero sobre la cuenta ya autenticada.
+     */
+    async function setupKey(password: string): Promise<void> {
+        await ensureCsrfCookie();
+        const newSalt = toBase64(crypto.getRandomValues(new Uint8Array(16)));
+        const kdf = DEFAULT_KDF_PARAMS;
+        const masterKey = await deriveMasterKey(password, newSalt, kdf);
+        try {
+            const verifier = await deriveAuthVerifier(masterKey);
+            const wrappingKey = await deriveWrappingKey(masterKey);
+            const vaultBytes = generateVaultKeyBytes();
+            const wrapped = await wrapVaultKey(wrappingKey, vaultBytes);
+
+            const { data } = await api.post<SessionPayload>('/auth/setup-key', {
+                kdf_type: kdf.type,
+                kdf_memory: kdf.memory,
+                kdf_iterations: kdf.iterations,
+                kdf_parallelism: kdf.parallelism,
+                kdf_salt: newSalt,
+                verifier,
+                protected_key: wrapped,
+            });
+
+            keychain.setVaultKey(await importVaultKey(vaultBytes));
+            zero(vaultBytes);
+            applySession(data);
+        } finally {
+            zero(masterKey);
         }
     }
 
@@ -219,8 +259,11 @@ export const useAuthStore = defineStore('auth', () => {
         protectedKey,
         ready,
         isAuthenticated,
+        needsSetup,
         register,
         login,
+        loginWithGoogle,
+        setupKey,
         fetchSession,
         unlock,
         logout,
