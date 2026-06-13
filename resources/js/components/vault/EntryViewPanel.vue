@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Drawer from 'primevue/drawer';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
@@ -7,6 +7,7 @@ import { useConfirm } from 'primevue/useconfirm';
 
 import { useVaultStore, type DecryptedEntry } from '@/stores/vault';
 import { useSecretClipboard } from '@/services/clipboard';
+import TotpDisplay from '@/components/vault/TotpDisplay.vue';
 
 const props = defineProps<{ visible: boolean; entry: DecryptedEntry | null }>();
 const emit = defineEmits<{
@@ -26,6 +27,10 @@ watch(
         revealed.value = false;
     },
 );
+
+// El TOTP (type=3) se muestra como código en vivo, no como campo crudo.
+const totpValue = computed(() => props.entry?.customFields.find((f) => f.type === 3)?.value ?? null);
+const visibleFields = computed(() => props.entry?.customFields.filter((f) => f.type !== 3) ?? []);
 
 function confirmDelete(): void {
     const entry = props.entry;
@@ -98,8 +103,11 @@ function confirmDelete(): void {
                 </div>
             </div>
 
+            <!-- Código TOTP en vivo -->
+            <TotpDisplay v-if="totpValue" :value="totpValue" />
+
             <!-- Campos personalizados -->
-            <div v-for="(field, i) in props.entry.customFields" :key="i" class="flex flex-col gap-1">
+            <div v-for="(field, i) in visibleFields" :key="i" class="flex flex-col gap-1">
                 <span class="text-xs uppercase text-surface-500">{{ field.label }}</span>
                 <div class="flex items-center justify-between gap-2 rounded-md bg-surface-100 px-3 py-2 dark:bg-surface-800">
                     <span class="break-all" :class="field.protected ? 'font-mono' : ''">

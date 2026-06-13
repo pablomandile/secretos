@@ -97,6 +97,20 @@ class VaultTest extends TestCase
         $response->assertJsonPath('data.custom_fields.0.protected', true);
     }
 
+    public function test_acepta_campo_personalizado_totp_type_3(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/api/entries', $this->entryPayload([
+            'custom_fields' => [
+                ['label' => $this->cipher('TOTP'), 'value' => $this->cipher('otpauth'), 'type' => 3, 'protected' => true, 'position' => 0],
+            ],
+        ]))->assertCreated();
+
+        $response->assertJsonPath('data.custom_fields.0.type', 3);
+        $this->assertDatabaseHas('custom_fields', ['type' => 3]);
+    }
+
     public function test_rechaza_titulo_en_texto_plano(): void
     {
         $user = User::factory()->create();

@@ -34,6 +34,7 @@ const form = reactive<{
     password: string;
     url: string;
     notes: string;
+    totp: string;
     folderId: string | null;
     tagIds: string[];
     customFields: FieldRow[];
@@ -43,6 +44,7 @@ const form = reactive<{
     password: '',
     url: '',
     notes: '',
+    totp: '',
     folderId: null,
     tagIds: [],
     customFields: [],
@@ -61,9 +63,12 @@ watch(
         form.notes = e?.notes ?? '';
         form.folderId = e?.folderId ?? null;
         form.tagIds = e ? [...e.tagIds] : [];
-        form.customFields = e
-            ? e.customFields.map((f) => ({ label: f.label, value: f.value, type: f.type, protected: f.protected }))
-            : [];
+        // El TOTP se guarda como campo personalizado type=3; lo separamos del resto.
+        const fields = e?.customFields ?? [];
+        form.totp = fields.find((f) => f.type === 3)?.value ?? '';
+        form.customFields = fields
+            .filter((f) => f.type !== 3)
+            .map((f) => ({ label: f.label, value: f.value, type: f.type, protected: f.protected }));
     },
 );
 
@@ -121,6 +126,10 @@ async function save(): Promise<void> {
                 .filter((f) => f.label.trim() || f.value.trim())
                 .map((f) => ({ label: f.label, value: f.value, type: f.protected ? 2 : 1, protected: f.protected })),
         };
+        // TOTP como campo personalizado protegido type=3.
+        if (form.totp.trim()) {
+            input.customFields.push({ label: 'TOTP', value: form.totp.trim(), type: 3, protected: true });
+        }
         if (props.entry) {
             await vault.updateEntry(props.entry.id, input);
         } else {
@@ -171,6 +180,12 @@ async function save(): Promise<void> {
             <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">URL</label>
                 <InputText v-model="form.url" placeholder="https://" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Código 2FA (TOTP)</label>
+                <InputText v-model="form.totp" placeholder="Secreto base32 u otpauth://…" autocomplete="off" />
+                <small class="text-surface-500">Pegá el secreto del QR de 2FA; el código se genera acá.</small>
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
