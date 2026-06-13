@@ -10,5 +10,8 @@ export default defineConfig({
     test: {
         environment: 'node',
         include: ['resources/js/**/*.{test,spec}.ts'],
+        // Imprime en consola y además escribe un reporte JSON en cada corrida.
+        reporters: ['default', 'json'],
+        outputFile: { json: './reports/vitest.json' },
     },
 });

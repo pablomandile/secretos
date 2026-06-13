@@ -17,6 +17,10 @@
             <directory>app</directory>
         </include>
     </source>
+    <logging>
+        <!-- JUnit XML en cada corrida; scripts/test-report.mjs lo convierte a JSON. -->
+        <junit outputFile="reports/phpunit.junit.xml"/>
+    </logging>
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

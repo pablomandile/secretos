@@ -71,6 +71,17 @@ npm test             # crypto (Vitest): KDF, cifrado, jerarquía de claves, gene
 npm run typecheck    # vue-tsc
 ```
 
+### Reportes JSON
+
+```bash
+npm run test:report  # corre ambas suites y genera reportes JSON en reports/
+```
+
+Produce (carpeta `reports/`, ignorada por git):
+- `reports/vitest.json` — resultado del frontend/crypto (Vitest también lo escribe en cada `npm test`).
+- `reports/phpunit.json` — resultado del backend (convertido del JUnit XML).
+- `reports/summary.json` — totales combinados + `ok`.
+
 Scripts de verificación end-to-end contra la API viva (requieren `php artisan serve`):
 
 ```bash
