@@ -10,6 +10,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import { useAuthStore } from '@/stores/auth';
 import { useKeychainStore } from '@/stores/keychain';
 import { useVaultStore, type DecryptedEntry } from '@/stores/vault';
+import AppLogo from '@/components/AppLogo.vue';
 import FolderSidebar from '@/components/vault/FolderSidebar.vue';
 import EntryTable from '@/components/vault/EntryTable.vue';
 import EntryDialog from '@/components/vault/EntryDialog.vue';
@@ -78,9 +79,7 @@ async function logout(): Promise<void> {
     <div class="flex h-screen flex-col bg-surface-50 dark:bg-surface-950">
         <!-- Barra superior -->
         <header class="flex items-center gap-3 border-b border-surface-200 px-4 py-2 dark:border-surface-700">
-            <span class="flex items-center gap-2 font-semibold text-primary">
-                <i class="pi pi-lock" /> Secretos
-            </span>
+            <AppLogo class="h-8 w-auto shrink-0" />
             <IconField class="ml-2 flex-1 max-w-md">
                 <InputIcon class="pi pi-search" />
                 <InputText v-model="vault.query" placeholder="Buscar…" class="w-full" />

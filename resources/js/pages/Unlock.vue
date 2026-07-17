@@ -7,6 +7,7 @@ import Password from 'primevue/password';
 import Message from 'primevue/message';
 
 import { useAuthStore } from '@/stores/auth';
+import AppLogo from '@/components/AppLogo.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 
 const auth = useAuthStore();
@@ -40,7 +41,9 @@ async function logout(): Promise<void> {
 <template>
     <div class="relative flex min-h-screen items-center justify-center bg-surface-100 p-4 dark:bg-surface-950">
         <div class="absolute right-4 top-4"><ThemeToggle /></div>
-        <Card class="w-full max-w-md">
+        <div class="w-full max-w-md">
+            <AppLogo class="mx-auto mb-6 w-56" />
+            <Card>
             <template #title>
                 <span class="flex items-center gap-2">
                     <i class="pi pi-lock text-primary" />
@@ -74,6 +77,7 @@ async function logout(): Promise<void> {
                     <Button label="Cerrar sesión" link size="small" @click="logout" />
                 </form>
             </template>
-        </Card>
+            </Card>
+        </div>
     </div>
 </template>

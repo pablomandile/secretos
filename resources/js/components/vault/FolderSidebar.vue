@@ -46,10 +46,70 @@ function onSmartDragOver(event: DragEvent, key: string): void {
     dropTarget.value = 'unfiled';
 }
 
-function onFolderDragOver(event: DragEvent, key: string): void {
-    if (!vault.draggingIds.length) return;
+// --- Drag & drop: reanidar CARPETAS (origen y destino: el propio árbol) ---
+const draggingFolderId = ref<string | null>(null);
+
+function onFolderDragStart(event: DragEvent, key: string): void {
+    draggingFolderId.value = key;
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', key);
+    }
+}
+
+function endFolderDrag(): void {
+    draggingFolderId.value = null;
+    dropTarget.value = null;
+}
+
+/** ¿Se puede soltar la carpeta `srcId` sobre `targetKey` sin crear un ciclo? */
+function folderCanNest(srcId: string, targetKey: string): boolean {
+    return srcId !== targetKey && !vault.isDescendantFolder(targetKey, srcId);
+}
+
+// Un nodo acepta soltar ENTRADAS (mueve entradas) o una CARPETA (la reanida).
+function onNodeDragOver(event: DragEvent, key: string): void {
+    if (vault.draggingIds.length) {
+        event.preventDefault();
+        dropTarget.value = key;
+    } else if (draggingFolderId.value && folderCanNest(draggingFolderId.value, key)) {
+        event.preventDefault();
+        dropTarget.value = key;
+    }
+}
+
+async function onNodeDrop(key: string): Promise<void> {
+    if (vault.draggingIds.length) {
+        await moveDraggedTo(key);
+        return;
+    }
+    const src = draggingFolderId.value;
+    endFolderDrag();
+    if (src && folderCanNest(src, key)) {
+        await doMoveFolder(src, key);
+    }
+}
+
+async function doMoveFolder(srcId: string, parentId: string | null): Promise<void> {
+    const name = vault.folders.find((f) => f.id === srcId)?.name ?? 'La carpeta';
+    await vault.moveFolder(srcId, parentId);
+    const dest = parentId === null
+        ? 'la raíz'
+        : `"${vault.folders.find((f) => f.id === parentId)?.name ?? 'la carpeta'}"`;
+    toast.add({ severity: 'success', summary: `"${name}" movida a ${dest}`, life: 2500 });
+}
+
+// Zona de "raíz": soltar una carpeta sobre el encabezado la saca de su padre.
+function onRootDragOver(event: DragEvent): void {
+    if (!draggingFolderId.value) return;
     event.preventDefault();
-    dropTarget.value = key;
+    dropTarget.value = '__root__';
+}
+
+async function onRootDrop(): Promise<void> {
+    const src = draggingFolderId.value;
+    endFolderDrag();
+    if (src) await doMoveFolder(src, null);
 }
 
 const smartFilters = computed(() => [
@@ -109,6 +169,12 @@ function openDialog(mode: 'new' | 'rename' | 'subfolder'): void {
     folderName.value =
         mode === 'rename' ? (vault.folders.find((f) => f.id === menuFolderId.value)?.name ?? '') : '';
     dialogVisible.value = true;
+}
+
+/** Botón "+" de un nodo: crear subcarpeta directamente bajo esa carpeta. */
+function addSubfolder(key: string): void {
+    menuFolderId.value = key;
+    openDialog('subfolder');
 }
 
 async function saveFolder(): Promise<void> {
@@ -172,8 +238,16 @@ function selectTag(id: string): void {
 
         <!-- Carpetas -->
         <div>
-            <div class="mb-1 flex items-center justify-between px-2">
-                <span class="text-xs font-semibold uppercase text-surface-500">Carpetas</span>
+            <div
+                class="mb-1 flex items-center justify-between rounded px-2"
+                :class="dropTarget === '__root__' ? 'bg-primary/20 ring-2 ring-inset ring-primary' : ''"
+                @dragover="onRootDragOver"
+                @dragleave="dropTarget = null"
+                @drop="onRootDrop"
+            >
+                <span class="text-xs font-semibold uppercase text-surface-500">
+                    Carpetas<span v-if="draggingFolderId" class="ml-1 normal-case text-primary">· soltá acá para raíz</span>
+                </span>
                 <Button icon="pi pi-plus" text rounded size="small" v-tooltip.top="'Nueva carpeta'" @click="openDialog('new')" />
             </div>
             <Tree
@@ -187,12 +261,23 @@ function selectTag(id: string): void {
             >
                 <template #default="{ node }">
                     <span
-                        class="block w-full rounded"
+                        class="group flex w-full items-center gap-1 rounded pr-1"
                         :class="dropTarget === node.key ? 'bg-primary/20 ring-2 ring-inset ring-primary' : ''"
-                        @dragover="onFolderDragOver($event, node.key as string)"
+                        draggable="true"
+                        @dragstart="onFolderDragStart($event, node.key as string)"
+                        @dragend="endFolderDrag"
+                        @dragover="onNodeDragOver($event, node.key as string)"
                         @dragleave="dropTarget = null"
-                        @drop="moveDraggedTo(node.key as string)"
-                    >{{ node.label }}</span>
+                        @drop="onNodeDrop(node.key as string)"
+                    >
+                        <span class="flex-1 cursor-grab truncate">{{ node.label }}</span>
+                        <button
+                            type="button"
+                            class="shrink-0 rounded p-0.5 text-surface-400 opacity-0 hover:bg-surface-200 hover:text-primary group-hover:opacity-100 dark:hover:bg-surface-700"
+                            v-tooltip.top="'Nueva subcarpeta'"
+                            @click.stop="addSubfolder(node.key as string)"
+                        ><i class="pi pi-plus text-xs" /></button>
+                    </span>
                 </template>
             </Tree>
             <p v-else class="px-3 py-1 text-xs text-surface-400">Sin carpetas todavía.</p>
@@ -215,7 +300,7 @@ function selectTag(id: string): void {
             </div>
         </div>
 
-        <Dialog v-model:visible="dialogVisible" modal :header="dialogMode === 'rename' ? 'Renombrar carpeta' : 'Nueva carpeta'" class="w-80">
+        <Dialog v-model:visible="dialogVisible" modal :header="dialogMode === 'rename' ? 'Renombrar carpeta' : dialogMode === 'subfolder' ? 'Nueva subcarpeta' : 'Nueva carpeta'" class="w-80">
             <form @submit.prevent="saveFolder">
                 <InputText v-model="folderName" class="w-full" placeholder="Nombre" autofocus />
                 <div class="mt-4 flex justify-end gap-2">

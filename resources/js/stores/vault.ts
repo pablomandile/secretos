@@ -243,6 +243,28 @@ export const useVaultStore = defineStore('vault', () => {
         if (folder) folder.name = name;
     }
 
+    /** ¿`candidateId` está dentro del subárbol de `ancestorId`? (evita ciclos al mover). */
+    function isDescendantFolder(candidateId: string, ancestorId: string): boolean {
+        let cursor: string | null = folders.value.find((f) => f.id === candidateId)?.parentId ?? null;
+        let steps = 0;
+        while (cursor) {
+            if (cursor === ancestorId) return true;
+            cursor = folders.value.find((f) => f.id === cursor)?.parentId ?? null;
+            if (++steps > 10000) break;
+        }
+        return false;
+    }
+
+    /** Reanida una carpeta bajo otro padre (o a la raíz con parentId = null). */
+    async function moveFolder(id: string, parentId: string | null): Promise<void> {
+        const folder = folders.value.find((f) => f.id === id);
+        if (!folder || folder.parentId === parentId) return;
+        // Guarda de ciclo en cliente (el servidor también lo valida).
+        if (parentId !== null && (parentId === id || isDescendantFolder(parentId, id))) return;
+        await api.put(`/folders/${id}`, { name: await enc(folder.name), parent_id: parentId });
+        folder.parentId = parentId;
+    }
+
     async function deleteFolder(id: string): Promise<void> {
         await api.delete(`/folders/${id}`);
         folders.value = folders.value.filter((f) => f.id !== id);
@@ -445,6 +467,8 @@ export const useVaultStore = defineStore('vault', () => {
         createFolder,
         renameFolder,
         deleteFolder,
+        moveFolder,
+        isDescendantFolder,
         createTag,
         deleteTag,
         tagById,
