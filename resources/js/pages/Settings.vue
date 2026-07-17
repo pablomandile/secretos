@@ -13,6 +13,7 @@ import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/auth';
 import { useVaultStore } from '@/stores/vault';
 import { parseKeepassCsv, parseKeepassXml, type ImportRow } from '@/services/keepassImport';
+import { downloadKeepassXml } from '@/services/keepassExport';
 import StrengthMeter from '@/components/generator/StrengthMeter.vue';
 
 const auth = useAuthStore();
@@ -111,6 +112,29 @@ async function runImport(): Promise<void> {
         importing.value = false;
     }
 }
+
+// --- Exportar a KeePass 2 XML (texto plano, generado en el cliente) ---
+const exporting = ref(false);
+
+async function runExport(): Promise<void> {
+    exporting.value = true;
+    try {
+        if (!vault.loaded) await vault.load();
+        if (!vault.entries.length) {
+            toast.add({ severity: 'warn', summary: 'No hay entradas para exportar', life: 3000 });
+            return;
+        }
+        downloadKeepassXml(vault.entries, vault.folders);
+        toast.add({
+            severity: 'success',
+            summary: 'Exportación lista',
+            detail: `${vault.entries.length} entradas descargadas en XML.`,
+            life: 3000,
+        });
+    } finally {
+        exporting.value = false;
+    }
+}
 </script>
 
 <template>
@@ -185,6 +209,31 @@ async function runImport(): Promise<void> {
                         <Message v-if="importResult" severity="success" :closable="false">
                             Importadas {{ importResult.created }}<span v-if="importResult.failed">, {{ importResult.failed }} fallidas</span>.
                         </Message>
+                    </div>
+                </template>
+            </Card>
+
+            <Card>
+                <template #title>Exportar (KeePass 2 XML)</template>
+                <template #content>
+                    <div class="flex flex-col gap-3">
+                        <Message severity="warn" :closable="false">
+                            El archivo se genera <strong>sin cifrar</strong> (texto plano): cualquiera que lo
+                            abra ve todas tus contraseñas. Guardalo en un lugar seguro y borralo cuando termines
+                            de reimportarlo.
+                        </Message>
+                        <p class="text-sm text-surface-600 dark:text-surface-300">
+                            Descarga toda la bóveda como <strong>KeePass XML (2.x)</strong> (conserva carpetas,
+                            TOTP y campos personalizados). En KeePass 2.x: <strong>Archivo → Importar → KeePass
+                            XML (2.x)</strong>. El descifrado y la generación ocurren en tu navegador.
+                        </p>
+                        <Button
+                            label="Exportar bóveda a XML"
+                            icon="pi pi-download"
+                            :loading="exporting"
+                            class="self-start"
+                            @click="runExport"
+                        />
                     </div>
                 </template>
             </Card>

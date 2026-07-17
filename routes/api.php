@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('trash', [EntryController::class, 'trash']);
 
     Route::post('entries', [EntryController::class, 'store']);
+    Route::post('entries/bulk-delete', [EntryController::class, 'bulkDestroy']);
     Route::put('entries/{entry}', [EntryController::class, 'update']);
     Route::patch('entries/{entry}', [EntryController::class, 'updateMeta']);
     Route::delete('entries/{entry}', [EntryController::class, 'destroy']);

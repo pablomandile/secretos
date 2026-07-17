@@ -75,6 +75,8 @@ export const useVaultStore = defineStore('vault', () => {
     const query = ref('');
     const filter = ref<VaultFilter>({ type: 'all' });
     const selectedId = ref<string | null>(null);
+    // Ids de las entradas que se están arrastrando (drag&drop hacia carpetas).
+    const draggingIds = ref<string[]>([]);
 
     // Si la bóveda se bloquea, descartamos TODO el texto descifrado de memoria.
     watch(
@@ -204,6 +206,30 @@ export const useVaultStore = defineStore('vault', () => {
         await api.delete(`/entries/${id}`);
         entries.value = entries.value.filter((e) => e.id !== id);
         if (selectedId.value === id) selectedId.value = null;
+    }
+
+    /** Borrado suave de varias entradas de una (selección múltiple → papelera). */
+    async function deleteEntries(ids: string[]): Promise<void> {
+        if (!ids.length) return;
+        await api.post('/entries/bulk-delete', { ids });
+        const set = new Set(ids);
+        entries.value = entries.value.filter((e) => !set.has(e.id));
+        if (selectedId.value && set.has(selectedId.value)) selectedId.value = null;
+    }
+
+    /** Mueve una entrada a una carpeta (o la deja sin carpeta con folderId = null). */
+    async function moveEntry(id: string, folderId: string | null): Promise<void> {
+        const entry = entries.value.find((e) => e.id === id);
+        if (!entry || entry.folderId === folderId) return;
+        const { data } = await api.patch(`/entries/${id}`, { folder_id: folderId });
+        entry.folderId = data.data.folder_id;
+    }
+
+    /** Mueve varias entradas a la misma carpeta (usado por drag&drop de selección). */
+    async function moveEntries(ids: string[], folderId: string | null): Promise<number> {
+        const toMove = entries.value.filter((e) => ids.includes(e.id) && e.folderId !== folderId);
+        await Promise.all(toMove.map((e) => moveEntry(e.id, folderId)));
+        return toMove.length;
     }
 
     async function createFolder(name: string, parentId: string | null = null): Promise<void> {
@@ -403,6 +429,7 @@ export const useVaultStore = defineStore('vault', () => {
         query,
         filter,
         selectedId,
+        draggingIds,
         selectedEntry,
         filteredEntries,
         favoritesCount,
@@ -412,6 +439,9 @@ export const useVaultStore = defineStore('vault', () => {
         updateEntry,
         toggleFavorite,
         deleteEntry,
+        deleteEntries,
+        moveEntry,
+        moveEntries,
         createFolder,
         renameFolder,
         deleteFolder,

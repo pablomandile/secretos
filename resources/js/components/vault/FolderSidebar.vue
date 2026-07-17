@@ -10,11 +10,47 @@ import ContextMenu from 'primevue/contextmenu';
 import type { MenuItem } from 'primevue/menuitem';
 import Tag from 'primevue/tag';
 import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
 import { useVaultStore, type VaultFilter } from '@/stores/vault';
 
 const vault = useVaultStore();
 const confirm = useConfirm();
+const toast = useToast();
+
+// --- Drag & drop: mover entradas a carpetas (origen: EntryTable) ---
+// Guarda la clave del destino sobre el que se está arrastrando, para resaltarlo.
+const dropTarget = ref<string | null>(null);
+
+async function moveDraggedTo(folderId: string | null): Promise<void> {
+    dropTarget.value = null;
+    const ids = [...vault.draggingIds];
+    vault.draggingIds = [];
+    if (!ids.length) return;
+    const moved = await vault.moveEntries(ids, folderId);
+    if (moved > 0) {
+        const dest = folderId === null
+            ? 'Sin carpeta'
+            : (vault.folders.find((f) => f.id === folderId)?.name ?? 'la carpeta');
+        toast.add({
+            severity: 'success',
+            summary: `${moved} ${moved === 1 ? 'entrada movida' : 'entradas movidas'} a "${dest}"`,
+            life: 2500,
+        });
+    }
+}
+
+function onSmartDragOver(event: DragEvent, key: string): void {
+    if (key !== 'unfiled' || !vault.draggingIds.length) return;
+    event.preventDefault();
+    dropTarget.value = 'unfiled';
+}
+
+function onFolderDragOver(event: DragEvent, key: string): void {
+    if (!vault.draggingIds.length) return;
+    event.preventDefault();
+    dropTarget.value = key;
+}
 
 const smartFilters = computed(() => [
     { key: 'all', label: 'Todas', icon: 'pi pi-list', filter: { type: 'all' } as VaultFilter, count: vault.entries.length },
@@ -119,8 +155,14 @@ function selectTag(id: string): void {
             <li v-for="f in smartFilters" :key="f.key">
                 <button
                     class="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-800"
-                    :class="isActive(f.filter) ? 'bg-primary/10 font-medium text-primary' : ''"
+                    :class="[
+                        isActive(f.filter) ? 'bg-primary/10 font-medium text-primary' : '',
+                        f.key === 'unfiled' && dropTarget === 'unfiled' ? 'ring-2 ring-inset ring-primary' : '',
+                    ]"
                     @click="vault.filter = f.filter"
+                    @dragover="onSmartDragOver($event, f.key)"
+                    @dragleave="dropTarget = null"
+                    @drop="f.key === 'unfiled' && moveDraggedTo(null)"
                 >
                     <span class="flex items-center gap-2"><i :class="f.icon" />{{ f.label }}</span>
                     <span class="text-xs text-surface-400">{{ f.count }}</span>
@@ -142,7 +184,17 @@ function selectTag(id: string): void {
                 @node-select="onFolderSelect"
                 @node-contextmenu="onFolderContext"
                 class="!border-0 !p-0"
-            />
+            >
+                <template #default="{ node }">
+                    <span
+                        class="block w-full rounded"
+                        :class="dropTarget === node.key ? 'bg-primary/20 ring-2 ring-inset ring-primary' : ''"
+                        @dragover="onFolderDragOver($event, node.key as string)"
+                        @dragleave="dropTarget = null"
+                        @drop="moveDraggedTo(node.key as string)"
+                    >{{ node.label }}</span>
+                </template>
+            </Tree>
             <p v-else class="px-3 py-1 text-xs text-surface-400">Sin carpetas todavía.</p>
             <ContextMenu ref="folderMenu" :model="menuItems" />
         </div>

@@ -28,6 +28,7 @@ const drawerVisible = ref(false);
 const historyVisible = ref(false);
 const historyEntryId = ref<string | null>(null);
 const editingEntry = ref<DecryptedEntry | null>(null);
+const selectionMode = ref(false); // muestra/oculta las casillas para borrado múltiple
 
 onMounted(async () => {
     if (!vault.loaded) {
@@ -85,6 +86,15 @@ async function logout(): Promise<void> {
                 <InputText v-model="vault.query" placeholder="Buscar…" class="w-full" />
             </IconField>
             <Button label="Nueva" icon="pi pi-plus" @click="openNew" />
+            <Button
+                :icon="selectionMode ? 'pi pi-check-square' : 'pi pi-stop'"
+                :severity="selectionMode ? 'primary' : 'secondary'"
+                :text="!selectionMode"
+                :outlined="selectionMode"
+                rounded
+                v-tooltip.bottom="selectionMode ? 'Salir del modo selección' : 'Seleccionar para borrado múltiple'"
+                @click="selectionMode = !selectionMode"
+            />
             <ThemeToggle />
             <Button icon="pi pi-shield" severity="secondary" text rounded v-tooltip.bottom="'Salud de contraseñas'" @click="router.push({ name: 'health' })" />
             <Button icon="pi pi-trash" severity="secondary" text rounded v-tooltip.bottom="'Papelera'" @click="router.push({ name: 'trash' })" />
@@ -100,7 +110,7 @@ async function logout(): Promise<void> {
         <div v-else class="flex flex-1 overflow-hidden">
             <FolderSidebar />
             <main class="flex-1 overflow-hidden p-2">
-                <EntryTable :entries="vault.filteredEntries" @view="openView" @edit="openEdit" />
+                <EntryTable :entries="vault.filteredEntries" :selection-mode="selectionMode" @view="openView" @edit="openEdit" />
             </main>
         </div>
 

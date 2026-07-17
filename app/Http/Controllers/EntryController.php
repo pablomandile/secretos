@@ -65,6 +65,20 @@ class EntryController extends Controller
         return response()->json(null, 204);
     }
 
+    /** Borrado suave múltiple (selección de varias entradas → papelera). */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*' => ['string'],
+        ]);
+
+        // delete() sobre el query de un modelo con SoftDeletes hace borrado suave.
+        $deleted = $request->user()->entries()->whereIn('id', $validated['ids'])->delete();
+
+        return response()->json(['deleted' => $deleted]);
+    }
+
     /** Listado de la papelera (entradas con deleted_at). */
     public function trash(Request $request): JsonResponse
     {
