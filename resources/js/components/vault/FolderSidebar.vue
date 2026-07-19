@@ -69,16 +69,23 @@ function folderCanNest(srcId: string, targetKey: string): boolean {
 
 // Un nodo acepta soltar ENTRADAS (mueve entradas) o una CARPETA (la reanida).
 function onNodeDragOver(event: DragEvent, key: string): void {
-    if (vault.draggingIds.length) {
+    const acceptsEntries = vault.draggingIds.length > 0;
+    const acceptsFolder = !!draggingFolderId.value && folderCanNest(draggingFolderId.value, key);
+    if (acceptsEntries || acceptsFolder) {
         event.preventDefault();
-        dropTarget.value = key;
-    } else if (draggingFolderId.value && folderCanNest(draggingFolderId.value, key)) {
-        event.preventDefault();
+        // Cortamos la propagación: el <Tree> de PrimeVue tiene su propio dragover
+        // interno que fuerza dropEffect='none' (no usamos droppableNodes). Si el
+        // evento le llega por bubbling, pisa nuestro 'move' y sale el cursor de
+        // prohibido. Al frenarlo acá, ese handler interno nunca lo ve.
+        event.stopPropagation();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
         dropTarget.value = key;
     }
 }
 
-async function onNodeDrop(key: string): Promise<void> {
+async function onNodeDrop(key: string, event?: DragEvent): Promise<void> {
+    event?.preventDefault();
+    event?.stopPropagation();
     if (vault.draggingIds.length) {
         await moveDraggedTo(key);
         return;
@@ -98,6 +105,19 @@ async function doMoveFolder(srcId: string, parentId: string | null): Promise<voi
         : `"${vault.folders.find((f) => f.id === parentId)?.name ?? 'la carpeta'}"`;
     toast.add({ severity: 'success', summary: `"${name}" movida a ${dest}`, life: 2500 });
 }
+
+// Los handlers de drop van en TODA la fila del nodo (.p-tree-node-content),
+// no solo en el <span> del label: si no, soltar sobre el ícono/chevron/padding
+// de la carpeta cae en zona muerta (sin preventDefault) y el navegador muestra
+// el cursor de "prohibido". PrimeVue expone el nodo en context.node.
+const treePt = {
+    nodeContent: (o: { context: { node: TreeNode } }) => ({
+        onDragover: (e: DragEvent) => onNodeDragOver(e, o.context.node.key as string),
+        onDragenter: (e: DragEvent) => onNodeDragOver(e, o.context.node.key as string),
+        onDragleave: () => { dropTarget.value = null; },
+        onDrop: (e: DragEvent) => onNodeDrop(o.context.node.key as string, e),
+    }),
+};
 
 // Zona de "raíz": soltar una carpeta sobre el encabezado la saca de su padre.
 function onRootDragOver(event: DragEvent): void {
@@ -255,6 +275,7 @@ function selectTag(id: string): void {
                 :value="folderTree"
                 selection-mode="single"
                 :selection-keys="selectedKeys"
+                :pt="treePt"
                 @node-select="onFolderSelect"
                 @node-contextmenu="onFolderContext"
                 class="!border-0 !p-0"
@@ -268,7 +289,7 @@ function selectTag(id: string): void {
                         @dragend="endFolderDrag"
                         @dragover="onNodeDragOver($event, node.key as string)"
                         @dragleave="dropTarget = null"
-                        @drop="onNodeDrop(node.key as string)"
+                        @drop="onNodeDrop(node.key as string, $event)"
                     >
                         <span class="flex-1 cursor-grab truncate">{{ node.label }}</span>
                         <button
