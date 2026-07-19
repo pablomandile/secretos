@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import Drawer from 'primevue/drawer';
+import Dialog from 'primevue/dialog';
+import Listbox from 'primevue/listbox';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
-import { useVaultStore, type DecryptedEntry } from '@/stores/vault';
+import { useVaultStore, type DecryptedEntry, type DecryptedFolder } from '@/stores/vault';
 import { useSecretClipboard } from '@/services/clipboard';
 import TotpDisplay from '@/components/vault/TotpDisplay.vue';
 
@@ -47,6 +50,65 @@ function confirmDelete(): void {
             emit('update:visible', false);
         },
     });
+}
+
+// --- Mover la entrada a otra carpeta (alternativa al drag&drop, pensado para mobile) ---
+const toast = useToast();
+const moveVisible = ref(false);
+const moveTargetId = ref<string>('__root__'); // '__root__' = Sin carpeta
+
+interface FolderOption {
+    id: string;
+    label: string;
+    depth: number;
+}
+
+// Lista plana de carpetas ordenada por jerarquía, con `depth` para indentar.
+const folderOptions = computed<FolderOption[]>(() => {
+    const byParent = new Map<string | null, DecryptedFolder[]>();
+    for (const f of vault.folders) {
+        const arr = byParent.get(f.parentId) ?? [];
+        arr.push(f);
+        byParent.set(f.parentId, arr);
+    }
+    for (const arr of byParent.values()) {
+        arr.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+    }
+    const out: FolderOption[] = [{ id: '__root__', label: 'Sin carpeta', depth: 0 }];
+    const walk = (parentId: string | null, depth: number): void => {
+        for (const f of byParent.get(parentId) ?? []) {
+            out.push({ id: f.id, label: f.name, depth });
+            walk(f.id, depth + 1);
+        }
+    };
+    walk(null, 0);
+    return out;
+});
+
+const currentFolderName = computed(() =>
+    props.entry?.folderId
+        ? (vault.folders.find((f) => f.id === props.entry!.folderId)?.name ?? 'Carpeta')
+        : 'Sin carpeta',
+);
+
+const canMove = computed(() => {
+    const target = moveTargetId.value === '__root__' ? null : moveTargetId.value;
+    return !!props.entry && target !== props.entry.folderId;
+});
+
+function openMove(): void {
+    moveTargetId.value = props.entry?.folderId ?? '__root__';
+    moveVisible.value = true;
+}
+
+async function confirmMove(): Promise<void> {
+    const entry = props.entry;
+    if (!entry) return;
+    const target = moveTargetId.value === '__root__' ? null : moveTargetId.value;
+    await vault.moveEntry(entry.id, target);
+    moveVisible.value = false;
+    const name = target === null ? 'Sin carpeta' : (vault.folders.find((f) => f.id === target)?.name ?? 'la carpeta');
+    toast.add({ severity: 'success', summary: `"${entry.title}" movida a "${name}"`, life: 2500 });
 }
 </script>
 
@@ -133,11 +195,42 @@ function confirmDelete(): void {
                 />
             </div>
 
-            <div class="mt-2 flex gap-2">
+            <!-- Carpeta actual -->
+            <div class="flex items-center gap-2 text-sm text-surface-500">
+                <i class="pi pi-folder text-xs" />
+                <span class="truncate">{{ currentFolderName }}</span>
+            </div>
+
+            <div class="mt-2 flex flex-wrap gap-2">
                 <Button label="Editar" icon="pi pi-pencil" class="flex-1" @click="emit('edit', props.entry)" />
+                <Button label="Mover" icon="pi pi-folder-open" severity="secondary" outlined class="flex-1" @click="openMove" />
                 <Button icon="pi pi-history" severity="secondary" outlined v-tooltip.top="'Historial'" @click="emit('history', props.entry)" />
                 <Button icon="pi pi-trash" severity="danger" outlined v-tooltip.top="'Eliminar'" @click="confirmDelete" />
             </div>
         </div>
     </Drawer>
+
+    <!-- Diálogo para mover la entrada a otra carpeta -->
+    <Dialog v-model:visible="moveVisible" modal header="Mover a carpeta" class="mx-4 w-[92vw] max-w-md">
+        <div class="max-h-[50vh] overflow-y-auto">
+            <Listbox
+                v-model="moveTargetId"
+                :options="folderOptions"
+                option-label="label"
+                option-value="id"
+                class="w-full !border-0"
+            >
+                <template #option="{ option }">
+                    <span class="flex items-center gap-2" :style="{ paddingLeft: option.depth * 1.1 + 'rem' }">
+                        <i :class="option.id === '__root__' ? 'pi pi-inbox' : 'pi pi-folder'" class="text-sm text-surface-500" />
+                        <span class="truncate">{{ option.label }}</span>
+                    </span>
+                </template>
+            </Listbox>
+        </div>
+        <template #footer>
+            <Button label="Cancelar" text severity="secondary" @click="moveVisible = false" />
+            <Button label="Mover" icon="pi pi-check" :disabled="!canMove" @click="confirmMove" />
+        </template>
+    </Dialog>
 </template>
