@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useMediaQuery } from '@vueuse/core';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import Checkbox from 'primevue/checkbox';
+import Menu from 'primevue/menu';
+import type { MenuItem } from 'primevue/menuitem';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { useVaultStore, type DecryptedEntry } from '@/stores/vault';
@@ -75,6 +79,40 @@ function onDragStart(event: DragEvent, entry: DecryptedEntry): void {
 function onDragEnd(): void {
     vault.draggingIds = [];
 }
+
+// --- Vista mobile: lista tipo tarjeta en vez de la DataTable ---
+const isMobile = useMediaQuery('(max-width: 767px)');
+
+// Selección con checkbox por tarjeta (equivalente a la de la DataTable en desktop).
+function isSelected(entry: DecryptedEntry): boolean {
+    return selected.value.some((e) => e.id === entry.id);
+}
+function toggleSelected(entry: DecryptedEntry): void {
+    selected.value = isSelected(entry)
+        ? selected.value.filter((e) => e.id !== entry.id)
+        : [...selected.value, entry];
+}
+function onCardClick(entry: DecryptedEntry): void {
+    if (props.selectionMode) toggleSelected(entry);
+    else emit('view', entry);
+}
+
+// Menú "⋮" por tarjeta con las acciones que en desktop son botones sueltos.
+const rowMenu = ref();
+const menuEntry = ref<DecryptedEntry | null>(null);
+const rowMenuItems = computed<MenuItem[]>(() => {
+    const e = menuEntry.value;
+    if (!e) return [];
+    const items: MenuItem[] = [];
+    if (e.username) items.push({ label: 'Copiar usuario', icon: 'pi pi-user', command: () => copy(e.username, 'Usuario copiado') });
+    if (e.password) items.push({ label: 'Copiar contraseña', icon: 'pi pi-key', command: () => copy(e.password, 'Contraseña copiada') });
+    items.push({ label: 'Editar', icon: 'pi pi-pencil', command: () => emit('edit', e) });
+    return items;
+});
+function openRowMenu(event: Event, entry: DecryptedEntry): void {
+    menuEntry.value = entry;
+    rowMenu.value?.toggle(event);
+}
 </script>
 
 <template>
@@ -95,6 +133,7 @@ function onDragEnd(): void {
         </div>
 
         <DataTable
+            v-if="!isMobile"
             v-model:selection="selected"
             :value="props.entries"
             data-key="id"
@@ -183,5 +222,72 @@ function onDragEnd(): void {
                 </template>
             </Column>
         </DataTable>
+
+        <!-- Mobile: lista tipo tarjeta -->
+        <div v-else class="min-h-0 flex-1 overflow-y-auto">
+            <div v-if="!props.entries.length" class="py-12 text-center text-surface-500">
+                No hay entradas para mostrar.
+            </div>
+            <ul v-else class="divide-y divide-surface-200 dark:divide-surface-700">
+                <li
+                    v-for="entry in props.entries"
+                    :key="entry.id"
+                    class="flex items-center gap-2 py-3 pr-1"
+                    :class="props.selectionMode && isSelected(entry) ? 'bg-primary/10' : ''"
+                    @click="onCardClick(entry)"
+                >
+                    <Checkbox
+                        v-if="props.selectionMode"
+                        :model-value="isSelected(entry)"
+                        binary
+                        class="ml-1 shrink-0"
+                        @click.stop
+                        @update:model-value="toggleSelected(entry)"
+                    />
+                    <Button
+                        v-else
+                        :icon="entry.favorite ? 'pi pi-star-fill' : 'pi pi-star'"
+                        text
+                        rounded
+                        severity="warn"
+                        class="shrink-0"
+                        @click.stop="vault.toggleFavorite(entry.id)"
+                    />
+                    <div class="min-w-0 flex-1">
+                        <div class="truncate font-medium">{{ entry.title }}</div>
+                        <div v-if="entry.username" class="truncate text-sm text-surface-500">{{ entry.username }}</div>
+                        <div v-else-if="entry.url" class="truncate text-xs text-surface-400">{{ hostname(entry.url) }}</div>
+                        <div v-if="entry.tagIds.length" class="mt-1 flex flex-wrap gap-1">
+                            <Tag
+                                v-for="tagId in entry.tagIds"
+                                :key="tagId"
+                                :value="vault.tagById(tagId)?.name"
+                                :style="vault.tagById(tagId)?.color ? { background: vault.tagById(tagId)?.color } : undefined"
+                            />
+                        </div>
+                    </div>
+                    <Button
+                        v-if="entry.password"
+                        icon="pi pi-key"
+                        text
+                        rounded
+                        class="shrink-0"
+                        v-tooltip.left="'Copiar contraseña'"
+                        @click.stop="copy(entry.password, 'Contraseña copiada')"
+                    />
+                    <Button
+                        icon="pi pi-ellipsis-v"
+                        text
+                        rounded
+                        severity="secondary"
+                        class="shrink-0"
+                        aria-label="Más acciones"
+                        @click.stop="openRowMenu($event, entry)"
+                    />
+                </li>
+            </ul>
+        </div>
+
+        <Menu ref="rowMenu" :model="rowMenuItems" popup />
     </div>
 </template>

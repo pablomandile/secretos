@@ -5,8 +5,12 @@ import { isDark } from '@/services/theme';
 /**
  * Logo de Secretos. Muestra la versión clara u oscura según el tema activo.
  * El tamaño lo define quien lo usa vía `class` (p. ej. `h-8` o `w-52`).
+ * Con `solo` usa el ícono cuadrado (sin texto), útil en pantallas angostas.
  */
-const src = computed(() => (isDark.value ? '/img/logo-dark.png' : '/img/logo-light.png'));
+const props = defineProps<{ solo?: boolean }>();
+const src = computed(() =>
+    props.solo ? '/img/logo-solo.png' : isDark.value ? '/img/logo-dark.png' : '/img/logo-light.png',
+);
 </script>
 
 <template>
