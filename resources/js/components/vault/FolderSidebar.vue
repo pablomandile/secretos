@@ -294,7 +294,7 @@ function selectTag(id: string): void {
                         <span class="flex-1 cursor-grab truncate">{{ node.label }}</span>
                         <button
                             type="button"
-                            class="shrink-0 rounded p-0.5 text-surface-400 opacity-0 hover:bg-surface-200 hover:text-primary group-hover:opacity-100 dark:hover:bg-surface-700"
+                            class="shrink-0 rounded p-0.5 text-surface-400 opacity-0 hover:bg-surface-200 hover:text-primary group-hover:opacity-100 [@media(hover:none)]:opacity-100 dark:hover:bg-surface-700"
                             v-tooltip.top="'Nueva subcarpeta'"
                             @click.stop="addSubfolder(node.key as string)"
                         ><i class="pi pi-plus text-xs" /></button>
