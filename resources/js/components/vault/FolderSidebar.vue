@@ -13,10 +13,12 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 
 import { useVaultStore, type VaultFilter } from '@/stores/vault';
+import { usePwaInstall } from '@/services/pwa';
 
 const vault = useVaultStore();
 const confirm = useConfirm();
 const toast = useToast();
+const { canInstall, install } = usePwaInstall();
 
 // --- Drag & drop: mover entradas a carpetas (origen: EntryTable) ---
 // Guarda la clave del destino sobre el que se está arrastrando, para resaltarlo.
@@ -252,6 +254,16 @@ function selectTag(id: string): void {
                 >
                     <span class="flex items-center gap-2"><i :class="f.icon" />{{ f.label }}</span>
                     <span class="text-xs text-surface-400">{{ f.count }}</span>
+                </button>
+            </li>
+            <!-- Instalar como app (PWA): solo si el navegador la ofrece y no está instalada -->
+            <li v-if="canInstall">
+                <button
+                    class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-primary hover:bg-primary/10"
+                    @click="install"
+                >
+                    <i class="pi pi-download" />
+                    Instalar app
                 </button>
             </li>
         </ul>

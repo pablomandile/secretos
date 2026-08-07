@@ -12,6 +12,7 @@ import router from '@/router';
 import { setUnauthorizedHandler } from '@/services/api';
 import { useAuthStore } from '@/stores/auth';
 import '@/services/theme'; // aplica el tema claro/oscuro antes del primer render
+import { registerServiceWorker } from '@/services/pwa'; // PWA: SW + captura de beforeinstallprompt
 
 // La bóveda depende de WebCrypto (AES-GCM, HKDF): solo existe en contextos
 // seguros (https o localhost). Sin él la app no puede funcionar.
@@ -49,3 +50,5 @@ setUnauthorizedHandler(() => {
 });
 
 app.mount('#app');
+
+registerServiceWorker();

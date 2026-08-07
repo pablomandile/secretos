@@ -6,7 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Secretos') }}</title>
     <link rel="icon" href="{{ asset('secretos_ojo_candado.ico') }}" sizes="any">
-    <link rel="apple-touch-icon" href="{{ asset('img/logo-solo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/icon-192.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#10b981">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Secretos">
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
 </head>
 <body class="antialiased">

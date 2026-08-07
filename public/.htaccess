@@ -23,3 +23,8 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# PWA: servir el manifest con el tipo correcto (si no, Chrome avisa por content-type)
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
