@@ -28,3 +28,13 @@
 <IfModule mod_mime.c>
     AddType application/manifest+json .webmanifest
 </IfModule>
+
+# PWA: el navegador se entera de que hay una versión nueva pidiendo estas dos
+# URLs, que son fijas. Sin esto salen con `public, max-age=604800` y el CDN de
+# Hostinger las sirve viejas hasta una semana, congelando toda actualización.
+<IfModule mod_headers.c>
+    <FilesMatch "^(sw\.js|manifest\.webmanifest)$">
+        Header unset Expires
+        Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+    </FilesMatch>
+</IfModule>

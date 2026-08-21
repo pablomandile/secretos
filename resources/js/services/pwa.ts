@@ -40,7 +40,13 @@ window.addEventListener('appinstalled', () => {
 export function registerServiceWorker(): void {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(() => {
+            // El `?v=2` saltea la entrada vieja del CDN de Hostinger, que tenía
+            // cacheado /sw.js con max-age de 7 días: mientras el borde devolviera
+            // esa copia, ninguna actualización del SW llegaba. Registrar otro
+            // scriptURL con el mismo scope reemplaza la registración anterior. El
+            // .htaccess ya lo sirve con no-cache, así que este número no vuelve a
+            // subir salvo que se repita el problema.
+            navigator.serviceWorker.register('/sw.js?v=2').catch(() => {
                 /* si falla, la app sigue funcionando sin PWA */
             });
         });
