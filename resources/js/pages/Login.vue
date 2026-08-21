@@ -92,6 +92,9 @@ async function submit(): Promise<void> {
                 </form>
             </template>
             </Card>
+            <p class="mt-4 text-center text-xs text-surface-400">
+                <RouterLink :to="{ name: 'about' }" class="hover:text-primary hover:underline">Acerca de Secretos</RouterLink>
+            </p>
         </div>
     </div>
 </template>

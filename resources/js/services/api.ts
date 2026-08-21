@@ -34,12 +34,19 @@ export function setUnauthorizedHandler(handler: () => void): void {
     onUnauthorized = handler;
 }
 
+/**
+ * El sondeo de sesión al arrancar contesta 401 cuando simplemente no hay sesión:
+ * es una respuesta esperada, no una sesión que murió, así que no dispara el hook
+ * (si no, las páginas públicas rebotarían al login).
+ */
+const SESSION_PROBE = '/auth/session';
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
             csrfReady = false;
-            onUnauthorized?.();
+            if (error.config?.url !== SESSION_PROBE) onUnauthorized?.();
         }
         return Promise.reject(error);
     },

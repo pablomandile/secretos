@@ -142,6 +142,8 @@ async function logout(): Promise<void> {
                 <i class="pi pi-lock text-[10px]" />
                 Secretos · cifrado de extremo a extremo
             </span>
+            ·
+            <RouterLink :to="{ name: 'about' }" class="hover:text-primary hover:underline">Acerca de</RouterLink>
         </footer>
 
         <!-- Carpetas como drawer lateral en mobile (reutiliza el mismo FolderSidebar) -->

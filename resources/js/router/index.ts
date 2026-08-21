@@ -55,6 +55,12 @@ const router = createRouter({
             component: () => import('@/pages/HealthReport.vue'),
             meta: { requiresAuth: true, requiresUnlocked: true },
         },
+        {
+            path: '/acerca-de',
+            name: 'about',
+            component: () => import('@/pages/About.vue'),
+            meta: { public: true },
+        },
     ],
 });
 
@@ -66,6 +72,10 @@ router.beforeEach(async (to) => {
     if (!auth.ready) {
         await auth.fetchSession();
     }
+
+    // Páginas públicas (p. ej. «Acerca de»): se ven con o sin sesión, y sin pasar
+    // por el setup de la clave maestra.
+    if (to.meta.public) return true;
 
     const authed = auth.isAuthenticated;
     const needsSetup = auth.needsSetup; // sesión activa pero sin bóveda configurada
