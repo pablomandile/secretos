@@ -117,6 +117,7 @@ async function logout(): Promise<void> {
                 <Button icon="pi pi-shield" severity="secondary" text rounded v-tooltip.bottom="'Salud de contraseñas'" @click="router.push({ name: 'health' })" />
                 <Button icon="pi pi-trash" severity="secondary" text rounded v-tooltip.bottom="'Papelera'" @click="router.push({ name: 'trash' })" />
                 <Button icon="pi pi-cog" severity="secondary" text rounded v-tooltip.bottom="'Ajustes'" @click="router.push({ name: 'settings' })" />
+                <Button icon="pi pi-info-circle" severity="secondary" text rounded v-tooltip.bottom="'Acerca de'" @click="router.push({ name: 'about' })" />
                 <Button icon="pi pi-lock" severity="secondary" text rounded v-tooltip.bottom="'Bloquear'" @click="lock" />
                 <Button icon="pi pi-sign-out" severity="secondary" text rounded v-tooltip.bottom="'Cerrar sesión'" @click="logout" />
             </div>
@@ -142,8 +143,6 @@ async function logout(): Promise<void> {
                 <i class="pi pi-lock text-[10px]" />
                 Secretos · cifrado de extremo a extremo
             </span>
-            ·
-            <RouterLink :to="{ name: 'about' }" class="hover:text-primary hover:underline">Acerca de</RouterLink>
         </footer>
 
         <!-- Carpetas como drawer lateral en mobile (reutiliza el mismo FolderSidebar) -->

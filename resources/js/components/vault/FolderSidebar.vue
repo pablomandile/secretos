@@ -266,6 +266,16 @@ function selectTag(id: string): void {
                     Instalar app
                 </button>
             </li>
+            <!-- Acerca de: la ruta es pública, así que no rompe el bloqueo de la bóveda -->
+            <li>
+                <RouterLink
+                    :to="{ name: 'about' }"
+                    class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-800"
+                >
+                    <i class="pi pi-info-circle" />
+                    Acerca de
+                </RouterLink>
+            </li>
         </ul>
 
         <!-- Carpetas -->
