@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 
 import api from '@/services/api';
 import { useKeychainStore } from '@/stores/keychain';
-import type { ImportRow } from '@/services/keepassImport';
+import { entryKey, UNTITLED, type ImportRow } from '@/services/keepassImport';
 
 export interface DecryptedCustomField {
     label: string;
@@ -357,7 +357,13 @@ export const useVaultStore = defineStore('vault', () => {
     async function importRows(
         rows: ImportRow[],
         onProgress?: (done: number, total: number) => void,
-    ): Promise<{ created: number; failed: number }> {
+    ): Promise<{ created: number; failed: number; skipped: number }> {
+        // Sin la bóveda cargada no se pueden reconocer carpetas ni entradas que
+        // ya existen, y todo se duplicaría.
+        if (!loaded.value) await load();
+        const pending = rows.filter((r) => !isAlreadyInVault(r));
+        const skipped = rows.length - pending.length;
+
         // Asegura la cadena de carpetas para una ruta "A/B/C" (crea o reutiliza
         // cada nivel por nombre+padre) y devuelve el id de la carpeta hoja.
         const pathToId = new Map<string, string>();
@@ -385,7 +391,7 @@ export const useVaultStore = defineStore('vault', () => {
 
         let created = 0;
         let failed = 0;
-        for (const r of rows) {
+        for (const r of pending) {
             try {
                 const folderId = await ensureFolderPath(r.group);
                 const customFields = [
@@ -399,7 +405,7 @@ export const useVaultStore = defineStore('vault', () => {
                 ];
                 await createEntry({
                     type: 1,
-                    title: r.title || '(sin título)',
+                    title: r.title || UNTITLED,
                     username: r.username,
                     password: r.password,
                     url: r.url,
@@ -413,9 +419,15 @@ export const useVaultStore = defineStore('vault', () => {
             } catch {
                 failed++;
             }
-            onProgress?.(created + failed, rows.length);
+            onProgress?.(created + failed, pending.length);
         }
-        return { created, failed };
+        return { created, failed, skipped };
+    }
+
+    /** Si una fila de import coincide con una entrada activa (ver entryKey). */
+    function isAlreadyInVault(row: ImportRow): boolean {
+        const key = entryKey(row);
+        return entries.value.some((e) => entryKey(e) === key);
     }
 
     const filteredEntries = computed<DecryptedEntry[]>(() => {
@@ -479,5 +491,6 @@ export const useVaultStore = defineStore('vault', () => {
         fetchVersionDetail,
         restoreVersion,
         importRows,
+        isAlreadyInVault,
     };
 });

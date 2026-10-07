@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseCsv, parseKeepassCsv } from './keepassImport';
+import { entryKey, parseCsv, parseKeepassCsv, UNTITLED } from './keepassImport';
 
 describe('parseCsv', () => {
     it('parsea campos simples', () => {
@@ -84,5 +84,21 @@ describe('parseKeepassCsv', () => {
 
     it('devuelve vacío si no hay filas de datos', () => {
         expect(parseKeepassCsv('"Title","Password"')).toEqual([]);
+    });
+});
+
+describe('entryKey', () => {
+    it('ignora mayúsculas, espacios, contraseña y carpeta', () => {
+        const a = { title: 'Banco ', username: 'Pablo', url: 'https://banco.com', password: 'x', group: 'A' };
+        const b = { title: 'banco', username: 'pablo ', url: 'https://banco.com', password: 'y', group: 'B' };
+        expect(entryKey(a)).toBe(entryKey(b));
+    });
+
+    it('distingue usuarios distintos del mismo sitio', () => {
+        expect(entryKey({ title: 'Gmail', username: 'a', url: '' })).not.toBe(entryKey({ title: 'Gmail', username: 'b', url: '' }));
+    });
+
+    it('trata el título vacío como el que recibe al importarse', () => {
+        expect(entryKey({ title: '', username: 'u', url: '' })).toBe(entryKey({ title: UNTITLED, username: 'u', url: '' }));
     });
 });

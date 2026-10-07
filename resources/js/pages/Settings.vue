@@ -71,7 +71,10 @@ const rows = ref<ImportRow[]>([]);
 const fileName = ref('');
 const importing = ref(false);
 const progress = ref(0);
-const importResult = ref<{ created: number; failed: number } | null>(null);
+const importResult = ref<{ created: number; failed: number; skipped: number } | null>(null);
+// Filas del archivo que ya están en la bóveda: no se vuelven a importar.
+const duplicates = computed(() => rows.value.filter((r) => vault.isAlreadyInVault(r)).length);
+const toImport = computed(() => rows.value.length - duplicates.value);
 
 function pickFile(): void {
     fileInput.value?.click();
@@ -83,6 +86,7 @@ async function onFile(event: Event): Promise<void> {
     fileName.value = file.name;
     importResult.value = null;
     const text = await file.text();
+    if (!vault.loaded) await vault.load();
     const isXml = file.name.toLowerCase().endsWith('.xml') || text.trimStart().startsWith('<?xml') || text.includes('<KeePassFile');
     try {
         rows.value = isXml ? parseKeepassXml(text) : parseKeepassCsv(text);
@@ -97,7 +101,7 @@ async function onFile(event: Event): Promise<void> {
 }
 
 async function runImport(): Promise<void> {
-    if (!rows.value.length) return;
+    if (!toImport.value) return;
     importing.value = true;
     progress.value = 0;
     importResult.value = null;
@@ -203,11 +207,20 @@ async function runExport(): Promise<void> {
                             </span>
                         </div>
                         <template v-if="rows.length">
-                            <Button :label="`Importar ${rows.length} entradas`" icon="pi pi-check" :loading="importing" @click="runImport" />
+                            <Message v-if="duplicates" severity="info" :closable="false">
+                                {{ duplicates }} ya están en la bóveda (mismo título, usuario y URL) y se van a omitir.
+                            </Message>
+                            <Button
+                                v-if="toImport"
+                                :label="`Importar ${toImport} entradas`"
+                                icon="pi pi-check"
+                                :loading="importing"
+                                @click="runImport"
+                            />
                             <ProgressBar v-if="importing" :value="progress" />
                         </template>
                         <Message v-if="importResult" severity="success" :closable="false">
-                            Importadas {{ importResult.created }}<span v-if="importResult.failed">, {{ importResult.failed }} fallidas</span>.
+                            Importadas {{ importResult.created }}<span v-if="importResult.skipped">, {{ importResult.skipped }} omitidas porque ya existían</span><span v-if="importResult.failed">, {{ importResult.failed }} fallidas</span>.
                         </Message>
                     </div>
                 </template>

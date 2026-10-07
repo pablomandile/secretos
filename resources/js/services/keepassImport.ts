@@ -22,6 +22,19 @@ export interface ImportRow {
     customFields: ImportCustomField[];
 }
 
+/** Título que recibe una entrada importada sin título. */
+export const UNTITLED = '(sin título)';
+
+/**
+ * Clave para detectar que una entrada ya está en la bóveda: título + usuario +
+ * URL, sin distinguir mayúsculas ni espacios en los extremos. No entran la
+ * contraseña ni la carpeta, porque son lo que más se edita o mueve en la app
+ * después de importar y re-importar el mismo archivo volvería a duplicar.
+ */
+export function entryKey(e: { title: string; username: string; url: string }): string {
+    return [e.title || UNTITLED, e.username, e.url].map((s) => s.trim().toLowerCase()).join('\u0000');
+}
+
 /** Parser CSV genérico → filas de campos. */
 export function parseCsv(text: string): string[][] {
     // Descarta el BOM inicial (algunas exportaciones de KeePass lo incluyen);
