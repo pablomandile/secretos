@@ -24,9 +24,16 @@ async function submit(): Promise<void> {
         await auth.unlock(password.value);
         password.value = '';
         await router.push({ name: 'vault' });
-    } catch {
-        // Fallo del tag GCM = contraseña incorrecta (validación 100% local).
-        error.value = 'Contraseña maestra incorrecta.';
+    } catch (e) {
+        // Fallo del tag GCM (OperationError) = contraseña incorrecta (validación 100% local).
+        // Cualquier otro error (WASM, WebCrypto no disponible, formato) NO es la contraseña.
+        if (e instanceof DOMException && e.name === 'OperationError') {
+            error.value = 'Contraseña maestra incorrecta.';
+        } else {
+            console.error('Error al desbloquear', e);
+            const detail = e instanceof Error ? e.message : String(e);
+            error.value = `No se pudo desbloquear (no es la contraseña): ${detail}`;
+        }
     } finally {
         loading.value = false;
     }

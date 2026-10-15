@@ -21,11 +21,13 @@ class SecurityHeaders
 
         // CSP estricta solo en producción: en local rompería el HMR de Vite.
         // 'unsafe-inline' en style-src porque PrimeVue inyecta estilos en línea.
+        // 'wasm-unsafe-eval' en script-src: Argon2id (hash-wasm) compila WebAssembly;
+        // habilita solo WASM, no eval() de JS.
         if (app()->environment('production')) {
             $response->headers->set(
                 'Content-Security-Policy',
                 "default-src 'self'; ".
-                "script-src 'self'; ".
+                "script-src 'self' 'wasm-unsafe-eval'; ".
                 "style-src 'self' 'unsafe-inline'; ".
                 "img-src 'self' data:; ".
                 "font-src 'self' data:; ".
