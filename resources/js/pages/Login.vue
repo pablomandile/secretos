@@ -31,7 +31,9 @@ async function submit(): Promise<void> {
         error.value =
             e instanceof AxiosError && e.response?.status === 422
                 ? 'Email o contraseña maestra incorrectos.'
-                : 'No se pudo iniciar sesión. Intentá de nuevo.';
+                : e instanceof AxiosError && !e.response
+                  ? 'Sin conexión. Iniciar sesión necesita red; después podrás usar la bóveda sin conexión.'
+                  : 'No se pudo iniciar sesión. Intentá de nuevo.';
     } finally {
         loading.value = false;
     }

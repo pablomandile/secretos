@@ -1,4 +1,7 @@
 import axios from 'axios';
+import ToastEventBus from 'primevue/toasteventbus';
+
+import { marcarConexion, marcarSinConexion } from '@/services/conexion';
 
 /**
  * Cliente axios para la API. Usa cookies de sesión Sanctum (withCredentials)
@@ -42,11 +45,35 @@ export function setUnauthorizedHandler(handler: () => void): void {
 const SESSION_PROBE = '/auth/session';
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // El service worker marca con X-Sin-Conexion lo que salió de la copia guardada.
+        if (response.headers['x-sin-conexion']) {
+            marcarSinConexion((response.headers['x-guardado-en'] as string | undefined) ?? null);
+        } else {
+            marcarConexion();
+        }
+        return response;
+    },
     (error) => {
         if (error.response?.status === 401) {
             csrfReady = false;
             if (error.config?.url !== SESSION_PROBE) onUnauthorized?.();
+        }
+        const method = String(error.config?.method ?? 'get').toLowerCase();
+        if (!error.response) {
+            // Falló por red: nada llegó al servidor.
+            marcarSinConexion();
+            if (method !== 'get') {
+                ToastEventBus.emit('add', {
+                    severity: 'warn',
+                    summary: 'Sin conexión',
+                    detail: 'Esta acción necesita conexión. Sin red la bóveda es de solo lectura.',
+                    life: 5000,
+                });
+            }
+        } else if (error.response.headers?.['x-sin-conexion']) {
+            // 503 propio del SW: pantalla que nunca se guardó.
+            marcarSinConexion();
         }
         return Promise.reject(error);
     },

@@ -10,6 +10,9 @@ import 'primeicons/primeicons.css';
 import App from '@/App.vue';
 import router from '@/router';
 import { setUnauthorizedHandler } from '@/services/api';
+import { alVolverLaConexion } from '@/services/conexion';
+import { useKeychainStore } from '@/stores/keychain';
+import { useVaultStore } from '@/stores/vault';
 import { useAuthStore } from '@/stores/auth';
 import '@/services/theme'; // aplica el tema claro/oscuro antes del primer render
 import { registerServiceWorker } from '@/services/pwa'; // PWA: SW + captura de beforeinstallprompt
@@ -47,6 +50,11 @@ const auth = useAuthStore(pinia);
 setUnauthorizedHandler(() => {
     auth.handleUnauthorized();
     router.push({ name: 'login' });
+});
+
+// Al volver la conexión, la bóveda se refresca: lo que se veía era una copia guardada.
+alVolverLaConexion(() => {
+    if (!useKeychainStore(pinia).isLocked) void useVaultStore(pinia).load().catch(() => {});
 });
 
 app.mount('#app');

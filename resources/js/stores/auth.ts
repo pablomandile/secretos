@@ -13,6 +13,7 @@ import {
 } from '@/crypto/keys';
 import { decryptBytes } from '@/crypto/cipher';
 import api, { ensureCsrfCookie } from '@/services/api';
+import { borrarDatosGuardados } from '@/services/conexion';
 import { useKeychainStore } from '@/stores/keychain';
 
 export interface AuthUser {
@@ -79,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     /** Ceremonia de registro: genera la vaultKey y la envía envuelta. */
     async function register(email: string, password: string, name: string | null): Promise<void> {
+        borrarDatosGuardados();
         await ensureCsrfCookie();
         const newSalt = toBase64(crypto.getRandomValues(new Uint8Array(16)));
         const kdf = DEFAULT_KDF_PARAMS;
@@ -111,6 +113,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     /** Login en dos pasos + desbloqueo inmediato reutilizando la masterKey. */
     async function login(email: string, password: string): Promise<void> {
+        borrarDatosGuardados(); // nada de otra cuenta debe quedar disponible sin red
         await ensureCsrfCookie();
         const { data: pre } = await api.post<ServerKdf>('/auth/prelogin', { email });
         const { params, salt: loginSalt } = mapKdf(pre);
@@ -188,6 +191,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             await api.post('/auth/logout');
         } finally {
+            borrarDatosGuardados();
             keychain.lock();
             reset();
         }
@@ -248,6 +252,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     /** Invocado por el interceptor 401: la sesión murió del lado del servidor. */
     function handleUnauthorized(): void {
+        borrarDatosGuardados();
         keychain.lock();
         reset();
     }

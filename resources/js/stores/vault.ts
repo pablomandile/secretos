@@ -173,6 +173,8 @@ export const useVaultStore = defineStore('vault', () => {
         );
         entries.value = await Promise.all((data.entries as any[]).map((e) => decryptEntry(e)));
         loaded.value = true;
+        // Deja la papelera guardada para uso sin conexión (el SW la copia; no se descifra).
+        void api.get('/trash').catch(() => {});
     }
 
     function upsertEntry(entry: DecryptedEntry): void {
