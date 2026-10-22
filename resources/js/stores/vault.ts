@@ -446,6 +446,10 @@ export const useVaultStore = defineStore('vault', () => {
                 [e.title, e.username, e.url].some((field) => field.toLowerCase().includes(q)),
             );
         }
+        // "Todas" muestra primero las últimas agregadas; el resto, alfabético.
+        if (f.type === 'all') {
+            return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.title.localeCompare(b.title));
+        }
         return [...list].sort((a, b) => a.title.localeCompare(b.title));
     });
 
