@@ -12,6 +12,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Secretos">
+    @if (config('demo.enabled'))
+    <meta name="demo-email" content="{{ config('demo.email') }}">
+    <meta name="demo-password" content="{{ config('demo.password') }}">
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
 </head>
 <body class="antialiased">

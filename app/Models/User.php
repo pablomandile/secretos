@@ -45,6 +45,12 @@ class User extends Authenticatable
         ];
     }
 
+    /** La cuenta demo compartida de la instancia pública (config/demo.php). */
+    public function isDemo(): bool
+    {
+        return config('demo.enabled') && $this->email === config('demo.email');
+    }
+
     /** Parámetros KDF que el cliente necesita para re-derivar la clave. */
     public function kdfParams(): array
     {

@@ -140,6 +140,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'name' => $user->name,
                 'auto_lock_minutes' => $user->auto_lock_minutes,
+                'demo' => $user->isDemo(),
             ],
             'kdf' => $user->kdfParams(),
             'protected_key' => $user->protected_key,

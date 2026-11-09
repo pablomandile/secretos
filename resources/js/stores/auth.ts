@@ -21,6 +21,8 @@ export interface AuthUser {
     email: string;
     name: string | null;
     auto_lock_minutes: number;
+    /** Cuenta demo compartida de la instancia pública. */
+    demo?: boolean;
 }
 
 interface ServerKdf {

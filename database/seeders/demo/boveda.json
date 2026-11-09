@@ -1,0 +1,415 @@
+{
+  "kdf": {
+    "type": 1,
+    "memory": 65536,
+    "iterations": 3,
+    "parallelism": 4,
+    "salt": "gxkkyS33vrWa3ky+1dFNPw=="
+  },
+  "verifier": "YzCiumxJMJ0i+Qc6f9FAE3/8xGL9hEVcHq9kzkBEIkw=",
+  "protected_key": "v1.1YAFiNvgpTOym3t6.TEIzl1v+K3HVhoQZcON+T2hZZ/UY8SmUKxE11zDujHiS0lIPhjWcWerHXYlhv74X",
+  "folders": [
+    {
+      "clave": "personal",
+      "padre": null,
+      "name": "v1.rSZk/3xtBQnE4v+U.wAlUdbz5tL7jvpyhYTTk/YZ/RoCn6B2S",
+      "position": 0
+    },
+    {
+      "clave": "trabajo",
+      "padre": null,
+      "name": "v1.t/DBuPZURnW7qru2.zF36vT806YyVHepoqzizxy6lbguAlUY=",
+      "position": 1
+    },
+    {
+      "clave": "servidores",
+      "padre": "trabajo",
+      "name": "v1.PuYTU589fZr4SUQ0.1SMixS5oVeMcv6IdEsByhLhpIX6U7BwoRSU=",
+      "position": 2
+    },
+    {
+      "clave": "finanzas",
+      "padre": null,
+      "name": "v1./WDO6/6At8vAkk08.cBlYOm4j3Uq2bKCTp20lJMDK4pAF44gK",
+      "position": 3
+    },
+    {
+      "clave": "hogar",
+      "padre": null,
+      "name": "v1.BhsFUBbq6V4c/p1u.PVjT1S/b61cMUMWv3jeQzRUK/ioa",
+      "position": 4
+    }
+  ],
+  "tags": [
+    {
+      "clave": "2fa",
+      "name": "v1.zvFsw2E8uHaErvwH.bvZl97QCA/yRvFgdgdBXjGkSww==",
+      "color": "#10b981"
+    },
+    {
+      "clave": "compartida",
+      "name": "v1.iaDWRhEzLxBvJWEA.owx7JHISpUj4ixdgMycnRX/HaaBh2TjT4rw=",
+      "color": "#6366f1"
+    },
+    {
+      "clave": "importante",
+      "name": "v1.4DGFyxawoEzXiB2b.pUod9Gezf3YlWz/UJvbYpU75CiVMXAoOoIo=",
+      "color": "#ef4444"
+    }
+  ],
+  "entries": [
+    {
+      "carpeta": "personal",
+      "type": 1,
+      "title": "v1.TimTbcmbKfhPtnSe.ghpcHBavQYRo2vZ7afB+NS6GJJVtkDFa3mUCI0bTJg==",
+      "username": "v1.Hn1pV1RhzKUMkr3a.B2AFItBRtkofen0l0ZG9vagMaLu5YrtP1B3vuYYoqTIQRFGhgztlAqI=",
+      "password": "v1.gAPyWritrp1b4tGy.sIWIobYpcvMrXPoHlhzzGwSa3+DHfmbGmeKhDUJ57Z8Ftg==",
+      "url": "v1.Xf4Z/AtTNIIHQZhM.bG5d9c1lZbj3qSwbfQ5kHXel6NjJKs6pi8ISUOVXWy6eeV5S19hsTA==",
+      "notes": null,
+      "favorite": true,
+      "dias_atras": 1,
+      "custom_fields": [
+        {
+          "label": "v1.RbDJQppa7YF4HUzP.OaXYTHtKhqeDnmBdVI+6cPdDvUo=",
+          "value": "v1.mfDuaCCdfN9gKNms.rDeU/Agz9St+zcPHC74Ure3wHsI3BZmMFDhdAf4j0wc=",
+          "type": 3,
+          "protected": true,
+          "position": 0
+        }
+      ],
+      "etiquetas": [
+        "2fa",
+        "importante"
+      ]
+    },
+    {
+      "carpeta": "finanzas",
+      "type": 1,
+      "title": "v1.hOXWnZ97Sd1VQysw.gKsf1IjNrMkZEGvxJEU6a70d+bFUGgaKPgf01Q==",
+      "username": "v1.s0mLz7Wn1Oqx0jbF.iZGMrYNwjyh/MoOB7Sbuh8SLqnNLzdEqeaUv",
+      "password": "v1.iLePD/4V/68gwij/.dcZsTTbhM3i2PTYH3qnkUgqinoeyQJtdlMhDIllBRcA=",
+      "url": "v1.kYeA/Lfggx7bkfER.pmI+m10L9GTGFe2NUtpjCo1xHpEoaE79aTfgosh1d09nyxUq4iaPc/s=",
+      "notes": "v1.JhDBDvyaTRy2Iboz.Iv8BxSURuhdcJk621GkPX5SowDT3HktffUcc13b5qOtCsHjJXhjL+o7OnfZ53g84xQB0U+23X3HR8dLZpM2Wn4VyiPZQDBRDsA4aMp4o/AeY8Oi2LLJaoQo/Mg4=",
+      "favorite": true,
+      "dias_atras": 3,
+      "custom_fields": [
+        {
+          "label": "v1.qK0CaMrt0O4TvvSZ.dSISfX5y8i+KL6moWGEgw22TO1M4won0IeI=",
+          "value": "v1.8zWfbD6S3ygCOdET.yJP5CwlPrFVRR/wcy3cvWnc3qys=",
+          "type": 2,
+          "protected": true,
+          "position": 0
+        },
+        {
+          "label": "v1.Go3KmkYqg2w6dCo/.V1JkOHYESZRi8Kxk9Kz/lMcFUMvjbpwoY1suLx+9VHExzXZTl27K",
+          "value": "v1.OWa0SXquyB7mGJAt.EtLVDwif8LTPSnUQSJxCKYWiAKs3PaIefTZLdEgPtiI=",
+          "type": 2,
+          "protected": true,
+          "position": 1
+        }
+      ],
+      "etiquetas": [
+        "importante"
+      ]
+    },
+    {
+      "carpeta": "hogar",
+      "type": 1,
+      "title": "v1.6WciHAdT7HLrSfAz.xi52Js0+H6Idd/ldC8gmSG7CfBUh+ihrTnXGyuY=",
+      "username": "v1.dY+92wb3WY3CZiNQ.b/PJ7ycb6nfMcbwpDv5I1UEhVjfm5Kai/xeQ",
+      "password": "v1.30cQbhdZXtLIhDpH.M+MyZVAEh0MD/u3Rrc2RdWYEw/2hWtzCsC3+",
+      "url": null,
+      "notes": "v1.OJnhV8ovkIKMoozA.IusQMBvkppd9yCnZdy3x29ryFPjRcn/UkchQ/770MfLsTnfK1o0x3XNzZMaWJ1x6thod8JHxeoGrSKxsltKFgIRPANpJG0AqPVLSIiDEeUVFMY888CFoDwfm",
+      "favorite": false,
+      "dias_atras": 5,
+      "custom_fields": [],
+      "etiquetas": [
+        "compartida"
+      ]
+    },
+    {
+      "carpeta": "personal",
+      "type": 1,
+      "title": "v1.La+T067OPOeeTh5Z.4gQyWi4ZqQ/aUJb8orJsd/oW3qjzbH0w27wxhHE8WG/d/w8=",
+      "username": "v1./WLUXaYsAM8bK+BY.icX4yKl7vxQtpk33YU8i8OVftq4q0kaijC7hQpyGul32XAhv+ll1TwQ=",
+      "password": "v1.wy+wvQUiJxxAj7io.vf4zRX4HW+ftKgVWZt0OcmyGWL0dQgOHksDp",
+      "url": "v1.E/t5K/3WslPHfXox.mLD83AJX9/mzu72WXkjJiM500yj9NdJKOMv/c1b7ua247qDjjBLJWRkT",
+      "notes": "v1.Do7uv0YyrDTtPp4z.dJGnY3Hoy92anz5iyj6v59E58ktjJyquNqSZxl3YPH6vdstDxnxGCd49W2H8Ot16R/0if5BzHCd9Tyj5mgn5BmakOiTO",
+      "favorite": false,
+      "dias_atras": 8,
+      "custom_fields": [],
+      "etiquetas": [
+        "compartida"
+      ]
+    },
+    {
+      "carpeta": "trabajo",
+      "type": 1,
+      "title": "v1.IiVxL1SeSxpJQuOe.pJWe2VMIdr5qO9CoyxLW38FKYa+UKLvoCZRfrGK6iyMcIQ==",
+      "username": "v1.0skx7T1xGC/JAxS4.AeFjGdOAy1eRWSs5nxrD9fzkgzypa2BJzDImCdxMZi8YhASK",
+      "password": "v1.3q3lHvGWLOvLyx6k.ksKZxveMSRO4jNE3bbwmreD/n1ZXqqLUYzRKA4Dr",
+      "url": "v1.Kp+8SCNy9hpHgqeP.02cgqZTS3FSXqjGLr4pw9u1cWZSgHgTzxnVqgV/9V/Y+E1iJXYgB1IDw6I1k9A==",
+      "notes": null,
+      "favorite": true,
+      "dias_atras": 10,
+      "custom_fields": [
+        {
+          "label": "v1.XdIPKrrw1PZpRQDX.7OD8ISsJ1NSapUj6Cks0K8uLtWw=",
+          "value": "v1.5EH8tuKW+iKlQqjt.GE2bSfYc7syCK4OZ1R19sfpyDqucXfF35qr9kZxVuLc=",
+          "type": 3,
+          "protected": true,
+          "position": 0
+        }
+      ],
+      "etiquetas": [
+        "2fa"
+      ]
+    },
+    {
+      "carpeta": "servidores",
+      "type": 1,
+      "title": "v1.ioawNg/+gbZ+lD3D.XxY0spIT0wWGX+5tlMGPG8Zh8talGWCX9K7WGlMAPZdqCbuInA==",
+      "username": "v1.6AvKwC8W0gUDG4eb.1lOWN9Vvg9w1l9qUM9/hhca0bF79Tg==",
+      "password": "v1.JTlKIAfJT6PMIAzB.xlFH10tdzjviRZwswEY/f6zN35cczbMibkR3WQJHtAD/1A==",
+      "url": "v1.waGk2HKWEQ7n1g2J.Vc7G1i79NUHzFb0aG8l+yGg7QRWSsx2mJ/QATcENsQSsNnJYQA==",
+      "notes": "v1./VJXgO0WcQXyyh1J.f4IB0wktnJE136EoCprxPg1Q4aMv5SIM2CLyMsuceMmIFy0+WmYv2K6FhcnChGVvirJVhK3cRaTx+xtcAqm/N4U+4TfbmoE=",
+      "favorite": false,
+      "dias_atras": 12,
+      "custom_fields": [
+        {
+          "label": "v1.oaa3K4/4utugN1Ri.kwBX31oz8+tetROS80Gn26YCJRV9WQ==",
+          "value": "v1.50jSGFrhmrAb2d5M.jOxvVLW99RaMuKnHKdl7GSAl",
+          "type": 1,
+          "protected": false,
+          "position": 0
+        },
+        {
+          "label": "v1.1t+jCi7/aQCv3c2q.Ol6whKxuedjaNSwkBa4Qm2XdlamX1zcfSST5ic2clA==",
+          "value": "v1./2uGOczhPPoxcoMp.0dNkZeYL4K6Ha3A6giNsm07A37weuHRdN6bRffWmvpfI1i50/2rujgPRiDfMAJ1kLA==",
+          "type": 1,
+          "protected": false,
+          "position": 1
+        }
+      ],
+      "etiquetas": [
+        "importante"
+      ]
+    },
+    {
+      "carpeta": "servidores",
+      "type": 1,
+      "title": "v1.1Tk1w8al+PU06xwz.31gQJyeKGhERQeqSWkPutmqR8HD/ZGIt+EYLB4cieMRd5EUeVw==",
+      "username": "v1.FWQuY767Mg7WHa9R.UR929cBW2nWh7UoJUYRa5aL4rT2nmu7j4Ikq",
+      "password": "v1.zuL6b0uXnXLbln9h.n/DZSw8EePJzF/RVaRlMuuq/VTAhMA==",
+      "url": "v1.1ueK1qEmD4JI05VR.3uqAvXeQrb5Aj/TcjiMjvbkA5eu12MQ5+dOjBVWlW0SxcJOHHaDVMyTZfMd9gYY=",
+      "notes": "v1.gH0QYJSaF/nRa/pi.1j9XY9HO3P5u19qdTKL7xqCgOIRIJ3+lFfVmPE4sDlxSkjmiAc8CgxmzQ2y9+4S1I0naHixhBpjzS9TvRSXIX4I34F/yufg1yScG/WP8N1Kw/N4eWNN4D951KVqde1biFQ==",
+      "favorite": false,
+      "dias_atras": 15,
+      "custom_fields": [],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "trabajo",
+      "type": 1,
+      "title": "v1.J5jtRaJ0GwPunLzi.vwCA8C5b4yIxz3+J85RKN9iHn3ZuVQIt6S612MePaSkcyo8=",
+      "username": "v1.6Oj8EZClJ2l+s+xI.fAmPIslJ0gVSdAXAAKWCL7BjaHpUmRCVe4wE5yEMjVFur1Z+",
+      "password": "v1.QyaOY9cD14i5t9V1.b70jsb2PpBAhPT5AiHV8s3dYwgnhQSpIdm4iTsHC",
+      "url": "v1.2Gyip7YhT7OFmDh2.LOsUw8U9H2kRjxZwRjJD3VVuccdrZ29r8Q/IHhVDTj4kjqGAf8eH8Jxsq4Im",
+      "notes": "v1.JcNrj3twjxjOqo3w.UHPqMlWqpJXE0n9RD2856P++EE/5zWRwGt5prri/GuQsT7OxDkSmqkEPlAGkG/y8cw==",
+      "favorite": false,
+      "dias_atras": 20,
+      "custom_fields": [],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "finanzas",
+      "type": 1,
+      "title": "v1.Cn/RasgBZdDe5GnI.lvX4yZxV3dc+95lckJtAUO3V+n00HgN8sGL78+E3yv2t",
+      "username": "v1.UqcH+3s6Q5ZCroZ4./mUKI7BBmVLxEOQqPVsEOviwRmlEO6q8g5f3ScatTHPnuA==",
+      "password": "v1.Wi2JziBxW5jWiRT0.kxk8GgT0GKgtEbnYA1vxrlDce0edVsih2axSgV2Wr+U+",
+      "url": "v1.B9m+v2c3iNC3r7WN.bmCPs43XAL8mNeXIvf98ETkliDe3qnIQa/Yv1NCRPAvWSH84AWxrDxSQIkrk",
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 25,
+      "custom_fields": [
+        {
+          "label": "v1./jDBDDlW8iIxdhfC.G1fqD1yq+Kv496CtnfUGxwMF8Bg=",
+          "value": "v1.B8OKFyMGSsGFI3LF.UuXKIuyoVjgVq9JyBShGHHbHN3ZsG5fAdQ+HfHUY0zc=",
+          "type": 3,
+          "protected": true,
+          "position": 0
+        }
+      ],
+      "etiquetas": [
+        "2fa"
+      ]
+    },
+    {
+      "carpeta": "finanzas",
+      "type": 1,
+      "title": "v1.7rXikAvxEgeqXhzU.5Swm6fRBU3shh3PA9I/gb1VJQleBeowmwOcx0z0QtZbJ3WQ=",
+      "username": "v1.GAoHmI0bDvJtaytQ.i1skHMFg1X+/UQxuO7iA/UE3FiRZXGWNkaBFpS1nOAfeT80th84=",
+      "password": null,
+      "url": null,
+      "notes": "v1.IjcmBi4lCceX5Wf7.jkurKtjkWoCdy6FytTRA7QqIDmtRvpkwCHdo9ZdxHI+qMv6urXGITqQqucIoDD53vOCkzFCbGdQefGxWl2ZWZ2c=",
+      "favorite": false,
+      "dias_atras": 30,
+      "custom_fields": [
+        {
+          "label": "v1.HAHzBEZTH9rNVSY2.RD0GsRETJvKoicl7urwj5RVkMyn42kc=",
+          "value": "v1.62p4SjqgTU9POlQH.Osv6PU5MX/t18EjHEHpQTvqzg7155zDWeina1wpXBhWwI1s=",
+          "type": 2,
+          "protected": true,
+          "position": 0
+        },
+        {
+          "label": "v1.gKY2JPNcJGf7Cc4+.d0hGMBsGdYsxQbTVaY2mxBhTwF56dFjiB/bAxca4mB0/tJhb",
+          "value": "v1.S0FTeGrsqz8ZIXX2.u0Jp+9jAlaerHFMGpI22evLVWQ==",
+          "type": 2,
+          "protected": true,
+          "position": 1
+        }
+      ],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "personal",
+      "type": 1,
+      "title": "v1.B6dCfhd9J50eGclJ.rYMyuv5EeLpVPUv6sFx3YoTnChsrOvESd8g=",
+      "username": "v1.yaZA5tNWMIrTcwiS.rSUnDOjPF+y+dfcDwKYOVZYpfpUx7W3rkWmCiUrJ",
+      "password": "v1.HOr6hfPErB7CpHNi.Ukol3wxsB7stTOJKK9+mFzCcKxW02YPK",
+      "url": "v1.zkbVT50eKieG1erR.+oWcpu8bomoPB6Z4Kq1KKZ2sXM4DOy230EjCram94vTlGTocWKPBHmjT",
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 40,
+      "custom_fields": [],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "hogar",
+      "type": 1,
+      "title": "v1.wYubtFHLnuZ/ZtpV.k2q+OBodKBVSGQ7XvZW/cflFULilfcTxgZnK/U4A",
+      "username": null,
+      "password": null,
+      "url": null,
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 45,
+      "custom_fields": [
+        {
+          "label": "v1.Xr3ySFXm0UsNEyVc.OPuy11tdCl5NtzN9OCKGNGF2x9mYx13Rd18mYaEKO27vI2DWJh3OLng=",
+          "value": "v1.WVjGaV+RzVvaGzbG.0qKFFaTv31sXbETdndGTsDzmAzk=",
+          "type": 2,
+          "protected": true,
+          "position": 0
+        },
+        {
+          "label": "v1.IG9fI5sFZJi9JxEI.n2f/j37jxdgio6noviHtEv3g9tPSjVSHQ9lAJAKxSl4aqL4/",
+          "value": "v1.62lUcTsNUAlmoKp8.VyScazrgl87KXmMOPIVjvXx+zjJDy7/j",
+          "type": 2,
+          "protected": true,
+          "position": 1
+        }
+      ],
+      "etiquetas": [
+        "compartida"
+      ]
+    },
+    {
+      "carpeta": "hogar",
+      "type": 1,
+      "title": "v1.+7+8TrNVaBTwVT+4.cfMbZC1Ile0kNo7ZDcu4nLJ/PrXQXvYO6EpOfARyIO6U",
+      "username": "v1.A4NPngL5rwP/lXwC.PR4911OTaZxknlSQeddvAr6PHtSBNnYjH8G/DOXCRdY=",
+      "password": "v1.FKwwzkItUKNjcHFw.gDjKYx3Ol3p1XytvefmDgtXuivRBf4/Yh6TKk1u3yQ==",
+      "url": "v1.prLNT1KjEfCikIzi.Xnka6EKJ/a6JC6oKo3g9+CWBFHpz7kikglXoMdD4dO1UauKmMF1TRvFHaw==",
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 60,
+      "custom_fields": [],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "personal",
+      "type": 1,
+      "title": "v1.Z7Kh+C124sSghX0U.kOJfrkn87/fU3xM9ri/wjAJI2RYv70Qo6yGdlEg=",
+      "username": "v1.Ddfx351Fn1Wlw3c8.wIUYG4V7PIbfM86Pxeklhzk9101g5lHGZ7zFnEbKHL1NQNri7XRLf/w=",
+      "password": "v1.LOWsNc0gt2gJjr4x.OeLKfRm6WkOPXa1isHPZ5Fvfp75QbMv+PqGZyGwrIdHIBQ==",
+      "url": "v1./8TwWK2nBi4i885q.y4eqCYgcLQC/zQEarXqYgKe4Ma4ariB4lzW036ftffZzO1cACH+CVEPA",
+      "notes": "v1.rVbN3mBa2tWMgnv6.FEFZ8QtiQMJEyq7dAofDu89hEx9xqPzzfIrM6nx8tRyF+Mc14lX/woHz7PO/U78ZPKJ0hah9i6ItYEK5VWkSMzmoO4UteMpUXvuK6eg=",
+      "favorite": false,
+      "dias_atras": 75,
+      "custom_fields": [],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "trabajo",
+      "type": 1,
+      "title": "v1.m7v+aUPD7yp32SMn.dzUxyGslYi1m4RcPyq0HPSPnqKJgDYpM11RYhaKFv7U9MJzI4Mk=",
+      "username": "v1.0xJdxAwCUsg/hD47./g1woBU9EPlnY+yCz3xC+6JQx8C1opE2",
+      "password": "v1.Ig0ncvVbiN2NiLy4.xymeZ946cPcgxHRGiFaqjvY11u15zTRxVFKyWm6E32I=",
+      "url": "v1.cDESwkPaxaErG9YV.dzIv9FybSqRUp8f6wLE1HrdA9gMDRPyO6IZDkkiTYmOpT1h804fU",
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 90,
+      "custom_fields": [
+        {
+          "label": "v1.AMfgsZbqYD3Kou08.qPuL1VYnbRxzL4BuqjIHeXdWo2XWr/BfIU49CUuRRg==",
+          "value": "v1.lfSjuWzdv0Eau1Ts.HJOrP0SFvqvQVqCxGDgcglwNdcx9VGgN22DKNN/Khf4Ow8ufp0FA6n4f8ioH+0AlYcI=",
+          "type": 2,
+          "protected": true,
+          "position": 0
+        }
+      ],
+      "etiquetas": [
+        "2fa"
+      ]
+    },
+    {
+      "carpeta": null,
+      "type": 1,
+      "title": "v1.K4O4MM8nmWBuHqgM.vUWA9OeCletLcuHACttRteJ4xbdTvYtBj9clYMwMSSGcpajpm986ME67cEE=",
+      "username": null,
+      "password": null,
+      "url": null,
+      "notes": "v1.4R8533S/xw4+4zSV.G7gOSaFYEvq/LIdmdGoR7Uq/4etUtD/D+ZJTyUFa/nWRsiVrTDkVpbusmm9lrPz3qRMImvVETmzsaGLhx3cGpkhEU03ujXU/C1oKbZBy2Wd2oimOrgeVAlTA8HBDZrJX1w==",
+      "favorite": false,
+      "dias_atras": 120,
+      "custom_fields": [],
+      "etiquetas": []
+    },
+    {
+      "carpeta": null,
+      "type": 1,
+      "title": "v1.zlFDoC8XL1J0LxRD.bw22isb5AMN8MGrtSp/dh1In/KYAVqeuZBb61X8QfbdWLZtT",
+      "username": "v1.gAggbhWATlvuabrN.Jf0AdwfLKuRcHr1xF/ZGUXLu68kgeG/st+eT6qNJnzOggjXVF9pgQVU=",
+      "password": null,
+      "url": null,
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 150,
+      "custom_fields": [
+        {
+          "label": "v1.72jGAZWVsX929rRw.++r0SShtWz18e0z8wqvNLEoDTusHWDUqTL80+33RtGFu",
+          "value": "v1.24AF4kiTSm5XxN6s.mVKcSOiWu/hDutYnVNEvxKQ8QhL6yAmb4ByrrvsHQTIzJCE=",
+          "type": 2,
+          "protected": true,
+          "position": 0
+        }
+      ],
+      "etiquetas": []
+    },
+    {
+      "carpeta": "personal",
+      "type": 1,
+      "title": "v1.tFirkFfcVepwQixz.0vdD9QWOW3xnhJmyKq5iSyr/i30m9xa38iGb",
+      "username": "v1./FAHnL3UX4RM0iBM.qUPF7LELY/t3lgA7OzSiQl9Kw9tp80Fca/iKsAuGpIge/w==",
+      "password": "v1.5YCi4jH3k+vgBRjP.QS1WUclCXtXtsR3spP2VADY8tgNL85jU+GtKEZU=",
+      "url": "v1.8PYDM/d2WvQnX1OJ.E4NmgRcitIwiATknaYtWFSNhkZ/eYgo9ZTRtA0tVR8ycjnAinhhaLRc=",
+      "notes": null,
+      "favorite": false,
+      "dias_atras": 200,
+      "custom_fields": [],
+      "etiquetas": []
+    }
+  ]
+}

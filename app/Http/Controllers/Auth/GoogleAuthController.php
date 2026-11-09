@@ -34,6 +34,11 @@ class GoogleAuthController extends Controller
         $user = User::where('google_id', $googleUser->getId())->first()
             ?? User::where('email', $googleUser->getEmail())->first();
 
+        // La cuenta demo entra solo con su clave maestra: nadie la vincula a su Google.
+        if ($user?->isDemo()) {
+            return redirect('/login?error=google');
+        }
+
         if (! $user) {
             $user = User::create([
                 'email' => $googleUser->getEmail(),

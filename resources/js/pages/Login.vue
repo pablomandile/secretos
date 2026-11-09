@@ -20,6 +20,17 @@ const password = ref('');
 const loading = ref(false);
 const error = ref('');
 
+// Solo en la instancia demo: el servidor publica las credenciales en el <head>.
+const meta = (name: string) => document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)?.content ?? '';
+const demo = meta('demo-email') ? { email: meta('demo-email'), password: meta('demo-password') } : null;
+
+async function enterDemo(): Promise<void> {
+    if (!demo) return;
+    email.value = demo.email;
+    password.value = demo.password;
+    await submit();
+}
+
 async function submit(): Promise<void> {
     error.value = '';
     loading.value = true;
@@ -45,6 +56,22 @@ async function submit(): Promise<void> {
         <div class="absolute right-4 top-4"><ThemeToggle /></div>
         <div class="w-full max-w-md">
             <AppLogo class="mx-auto mb-6 w-56" />
+            <div
+                v-if="demo"
+                class="mb-4 flex flex-col gap-3 rounded-lg border border-primary-200 bg-primary-50 p-4 text-sm dark:border-primary-800 dark:bg-primary-950"
+            >
+                <div>
+                    <p class="font-semibold">Probá la demo</p>
+                    <p class="text-surface-600 dark:text-surface-300">
+                        Una bóveda de ejemplo, compartida y con datos ficticios, que se reinicia todas las noches.
+                        No guardes claves reales ahí.
+                    </p>
+                    <p class="mt-1 break-all text-surface-500">
+                        {{ demo.email }} · contraseña maestra <span class="font-mono">{{ demo.password }}</span>
+                    </p>
+                </div>
+                <Button type="button" label="Entrar a la demo" icon="pi pi-play" :loading="loading" @click="enterDemo" />
+            </div>
             <Card>
             <template #title>Ingresá a tu bóveda</template>
             <template #content>

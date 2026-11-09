@@ -17,6 +17,9 @@ class AccountController extends Controller
      */
     public function updateMasterPassword(Request $request): JsonResponse
     {
+        // La demo es compartida: si alguien le cambia la clave, deja afuera al resto.
+        abort_if($request->user()->isDemo(), 403, 'En la demo no se puede cambiar la clave maestra.');
+
         $data = $request->validate([
             'current_verifier' => ['required', 'string', 'size:44'],
             'verifier' => ['required', 'string', 'size:44', 'regex:/^[A-Za-z0-9+\/=]+$/'],

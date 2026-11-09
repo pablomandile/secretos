@@ -152,7 +152,10 @@ async function runExport(): Promise<void> {
             <Card>
                 <template #title>Cambiar clave maestra</template>
                 <template #content>
-                    <form class="flex flex-col gap-4" @submit.prevent="changePassword">
+                    <Message v-if="auth.user?.demo" severity="info" :closable="false">
+                        En la demo no se puede cambiar: la cuenta es compartida.
+                    </Message>
+                    <form v-else class="flex flex-col gap-4" @submit.prevent="changePassword">
                         <Message severity="warn" :closable="false">
                             No se puede recuperar. Si la olvidás, perdés el acceso a la bóveda.
                         </Message>
