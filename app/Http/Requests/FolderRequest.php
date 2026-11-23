@@ -21,6 +21,7 @@ class FolderRequest extends FormRequest
         return [
             'name' => ['required', new CipherString],
             'position' => ['integer', 'min:0'],
+            'hidden' => ['boolean'],
             'parent_id' => [
                 'nullable',
                 // No puede ser su propio padre y debe pertenecer al usuario.

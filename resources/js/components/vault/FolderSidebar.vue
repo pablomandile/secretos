@@ -12,7 +12,7 @@ import Tag from 'primevue/tag';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 
-import { useVaultStore, type VaultFilter } from '@/stores/vault';
+import { useVaultStore, compareFolderNames, type VaultFilter } from '@/stores/vault';
 import { usePwaInstall } from '@/services/pwa';
 
 const vault = useVaultStore();
@@ -135,7 +135,7 @@ async function onRootDrop(): Promise<void> {
 }
 
 const smartFilters = computed(() => [
-    { key: 'all', label: 'Todas', icon: 'pi pi-list', filter: { type: 'all' } as VaultFilter, count: vault.entries.length },
+    { key: 'all', label: 'Todas', icon: 'pi pi-list', filter: { type: 'all' } as VaultFilter, count: vault.entries.length - vault.hiddenEntriesCount },
     { key: 'favorites', label: 'Favoritas', icon: 'pi pi-star', filter: { type: 'favorites' } as VaultFilter, count: vault.favoritesCount },
     { key: 'unfiled', label: 'Sin carpeta', icon: 'pi pi-inbox', filter: { type: 'unfiled' } as VaultFilter, count: vault.entries.filter((e) => !e.folderId).length },
 ]);
@@ -144,17 +144,26 @@ function isActive(f: VaultFilter): boolean {
     return JSON.stringify(vault.filter) === JSON.stringify(f);
 }
 
-// Árbol de carpetas a partir de la lista plana (parent_id).
+// Árbol de carpetas a partir de la lista plana (parent_id), en orden alfabético en cada nivel.
+// Las ocultas ("No mostrar") llevan el ícono de ojo tachado; las de adentro heredan el atenuado.
 const folderTree = computed<TreeNode[]>(() => {
     const byParent = new Map<string | null, TreeNode[]>();
     for (const folder of vault.folders) {
-        const node: TreeNode = { key: folder.id, label: folder.name, icon: 'pi pi-folder', children: [] };
+        const node: TreeNode = {
+            key: folder.id,
+            label: folder.name,
+            icon: folder.hidden ? 'pi pi-eye-slash' : 'pi pi-folder',
+            data: { hidden: folder.hidden, dimmed: vault.isFolderHidden(folder.id) },
+            children: [],
+        };
         const siblings = byParent.get(folder.parentId) ?? [];
         siblings.push(node);
         byParent.set(folder.parentId, siblings);
     }
     const attach = (nodes: TreeNode[]): TreeNode[] =>
-        nodes.map((n) => ({ ...n, children: attach(byParent.get(n.key as string) ?? []) }));
+        [...nodes]
+            .sort((a, b) => compareFolderNames(a.label as string, b.label as string))
+            .map((n) => ({ ...n, children: attach(byParent.get(n.key as string) ?? []) }));
     return attach(byParent.get(null) ?? []);
 });
 
@@ -171,10 +180,17 @@ const folderMenu = ref<InstanceType<typeof ContextMenu>>();
 const menuFolderId = ref<string | null>(null);
 // "Eliminar" solo se habilita si la carpeta está vacía (sin claves ni subcarpetas).
 const menuItems = computed<MenuItem[]>(() => {
-    const empty = menuFolderId.value ? vault.isFolderEmpty(menuFolderId.value) : false;
+    const id = menuFolderId.value;
+    const empty = id ? vault.isFolderEmpty(id) : false;
+    const hidden = id ? (vault.folders.find((f) => f.id === id)?.hidden ?? false) : false;
     return [
         { label: 'Nueva subcarpeta', icon: 'pi pi-plus', command: () => openDialog('subfolder') },
         { label: 'Renombrar', icon: 'pi pi-pencil', command: () => openDialog('rename') },
+        {
+            label: hidden ? 'Mostrar en "Todas"' : 'No mostrar en "Todas"',
+            icon: hidden ? 'pi pi-eye' : 'pi pi-eye-slash',
+            command: () => toggleHidden(),
+        },
         {
             label: empty ? 'Eliminar' : 'Eliminar (solo si está vacía)',
             icon: 'pi pi-trash',
@@ -230,6 +246,24 @@ async function saveFolder(): Promise<void> {
         dialogVisible.value = false;
     } finally {
         saving.value = false;
+    }
+}
+
+async function toggleHidden(): Promise<void> {
+    const id = menuFolderId.value;
+    const folder = vault.folders.find((f) => f.id === id);
+    if (!id || !folder) return;
+    const hide = !folder.hidden;
+    try {
+        await vault.setFolderHidden(id, hide);
+        toast.add({
+            severity: 'success',
+            summary: hide ? `"${folder.name}" no se muestra en "Todas"` : `"${folder.name}" vuelve a mostrarse en "Todas"`,
+            detail: hide ? 'Sus claves siguen en la carpeta; entrá a ella para verlas.' : undefined,
+            life: 3000,
+        });
+    } catch {
+        toast.add({ severity: 'error', summary: 'No se pudo cambiar la carpeta', detail: 'Probá de nuevo.', life: 4000 });
     }
 }
 
@@ -351,7 +385,11 @@ function selectTag(id: string): void {
                         @dragleave="dropTarget = null"
                         @drop="onNodeDrop(node.key as string, $event)"
                     >
-                        <span class="flex-1 cursor-grab truncate">{{ node.label }}</span>
+                        <span
+                            class="flex-1 cursor-grab truncate"
+                            :class="node.data?.dimmed ? 'text-surface-400 italic' : ''"
+                            :title="node.data?.hidden ? 'No se muestra en Todas' : undefined"
+                        >{{ node.label }}</span>
                         <button
                             type="button"
                             class="shrink-0 rounded p-0.5 text-surface-400 opacity-0 hover:bg-surface-200 hover:text-primary group-hover:opacity-100 [@media(hover:none)]:opacity-100 dark:hover:bg-surface-700"

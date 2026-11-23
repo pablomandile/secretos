@@ -15,6 +15,7 @@ class FolderResource extends JsonResource
             'parent_id' => $this->parent_id,
             'name' => $this->name,
             'position' => $this->position,
+            'hidden' => (bool) $this->hidden,
         ];
     }
 }

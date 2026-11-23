@@ -213,6 +213,25 @@ class VaultTest extends TestCase
         $this->assertSame($parent->id, $child->parent_id);
     }
 
+    public function test_ocultar_y_mostrar_una_carpeta(): void
+    {
+        $user = User::factory()->create();
+        $folder = $this->makeFolder($user);
+
+        $this->actingAs($user)->getJson('/api/vault')->assertJsonPath('folders.0.hidden', false);
+
+        $this->actingAs($user)->putJson("/api/folders/{$folder->id}", ['name' => $folder->name, 'hidden' => true])
+            ->assertOk()->assertJsonPath('data.hidden', true);
+        $this->actingAs($user)->getJson('/api/vault')->assertJsonPath('folders.0.hidden', true);
+
+        // Renombrar sin mandar `hidden` no la vuelve a mostrar.
+        $this->actingAs($user)->putJson("/api/folders/{$folder->id}", ['name' => $this->cipher('otra')])->assertOk();
+        $this->assertTrue($folder->refresh()->hidden);
+
+        $this->actingAs($user)->putJson("/api/folders/{$folder->id}", ['name' => $folder->name, 'hidden' => 'quizas'])
+            ->assertUnprocessable()->assertJsonValidationErrors('hidden');
+    }
+
     public function test_solo_se_borra_una_carpeta_vacia(): void
     {
         $user = User::factory()->create();

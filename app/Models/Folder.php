@@ -11,7 +11,11 @@ class Folder extends Model
 {
     use HasUlids;
 
-    protected $fillable = ['parent_id', 'name', 'position'];
+    protected $fillable = ['parent_id', 'name', 'position', 'hidden'];
+
+    protected $casts = [
+        'hidden' => 'boolean',
+    ];
 
     public function user(): BelongsTo
     {

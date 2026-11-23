@@ -24,8 +24,8 @@ function entry(partial: Partial<DecryptedEntry> & { title: string }): DecryptedE
 }
 
 const folders: DecryptedFolder[] = [
-    { id: 'F1', parentId: null, name: 'Email', position: 0 },
-    { id: 'F2', parentId: 'F1', name: 'Personal', position: 0 },
+    { id: 'F1', parentId: null, name: 'Email', position: 0, hidden: false },
+    { id: 'F2', parentId: 'F1', name: 'Personal', position: 0, hidden: false },
 ];
 
 const entries: DecryptedEntry[] = [

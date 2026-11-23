@@ -34,6 +34,13 @@ export interface DecryptedFolder {
     parentId: string | null;
     name: string;
     position: number;
+    /** "No mostrar": sus claves (y las de sus subcarpetas) no salen en "Todas". */
+    hidden: boolean;
+}
+
+/** Orden alfabético de carpetas (sin distinguir mayúsculas/acentos, "2" antes que "10"). */
+export function compareFolderNames(a: string, b: string): number {
+    return a.localeCompare(b, 'es', { sensitivity: 'base', numeric: true });
 }
 
 export interface DecryptedTag {
@@ -157,6 +164,7 @@ export const useVaultStore = defineStore('vault', () => {
             parentId: f.parent_id,
             name: '', // se completa abajo
             position: f.position,
+            hidden: !!f.hidden,
         }));
         // Descifrado en paralelo.
         await Promise.all([
@@ -236,7 +244,7 @@ export const useVaultStore = defineStore('vault', () => {
 
     async function createFolder(name: string, parentId: string | null = null): Promise<void> {
         const { data } = await api.post('/folders', { name: await enc(name), parent_id: parentId });
-        folders.value.push({ id: data.data.id, parentId: data.data.parent_id, name, position: data.data.position });
+        folders.value.push({ id: data.data.id, parentId: data.data.parent_id, name, position: data.data.position, hidden: !!data.data.hidden });
     }
 
     async function renameFolder(id: string, name: string): Promise<void> {
@@ -281,6 +289,37 @@ export const useVaultStore = defineStore('vault', () => {
         }
         return names.length ? names.join(' / ') : null;
     }
+
+    /** ¿La carpeta está oculta, por sí misma o por estar dentro de una carpeta oculta? */
+    function isFolderHidden(id: string | null): boolean {
+        let cursor: string | null = id;
+        let steps = 0;
+        while (cursor && ++steps < 10000) {
+            const folder = folders.value.find((f) => f.id === cursor);
+            if (!folder) return false;
+            if (folder.hidden) return true;
+            cursor = folder.parentId;
+        }
+        return false;
+    }
+
+    /** Marca/desmarca "No mostrar" (el servidor exige el nombre en cada PUT). */
+    async function setFolderHidden(id: string, hidden: boolean): Promise<void> {
+        const folder = folders.value.find((f) => f.id === id);
+        if (!folder || folder.hidden === hidden) return;
+        await api.put(`/folders/${id}`, { name: await enc(folder.name), hidden });
+        folder.hidden = hidden;
+    }
+
+    /** Claves que "Todas" no muestra por estar en una carpeta oculta. */
+    const hiddenEntriesCount = computed(() => entries.value.filter((e) => isFolderHidden(e.folderId)).length);
+
+    /** Carpetas como lista plana con su ruta completa, en orden alfabético por ruta. */
+    const folderOptions = computed(() =>
+        folders.value
+            .map((f) => ({ id: f.id, label: folderPath(f.id) ?? f.name }))
+            .sort((a, b) => compareFolderNames(a.label, b.label)),
+    );
 
     /** Una carpeta está vacía si no tiene subcarpetas ni claves activas. */
     function isFolderEmpty(id: string): boolean {
@@ -452,7 +491,8 @@ export const useVaultStore = defineStore('vault', () => {
     const filteredEntries = computed<DecryptedEntry[]>(() => {
         let list = entries.value;
         const f = filter.value;
-        if (f.type === 'favorites') list = list.filter((e) => e.favorite);
+        if (f.type === 'all') list = list.filter((e) => !isFolderHidden(e.folderId));
+        else if (f.type === 'favorites') list = list.filter((e) => e.favorite);
         else if (f.type === 'unfiled') list = list.filter((e) => e.folderId === null);
         else if (f.type === 'folder') list = list.filter((e) => e.folderId === f.id);
         else if (f.type === 'tag') list = list.filter((e) => e.tagIds.includes(f.id));
@@ -505,7 +545,11 @@ export const useVaultStore = defineStore('vault', () => {
         moveFolder,
         isDescendantFolder,
         folderPath,
+        folderOptions,
         isFolderEmpty,
+        isFolderHidden,
+        setFolderHidden,
+        hiddenEntriesCount,
         createTag,
         deleteTag,
         tagById,

@@ -193,8 +193,8 @@ async function save(): Promise<void> {
                     <label class="text-sm font-medium">Carpeta</label>
                     <Select
                         v-model="form.folderId"
-                        :options="vault.folders"
-                        option-label="name"
+                        :options="vault.folderOptions"
+                        option-label="label"
                         option-value="id"
                         placeholder="Sin carpeta"
                         show-clear

@@ -8,7 +8,7 @@ import Tag from 'primevue/tag';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 
-import { useVaultStore, type DecryptedEntry, type DecryptedFolder } from '@/stores/vault';
+import { useVaultStore, compareFolderNames, type DecryptedEntry, type DecryptedFolder } from '@/stores/vault';
 import { useSecretClipboard } from '@/services/clipboard';
 import TotpDisplay from '@/components/vault/TotpDisplay.vue';
 
@@ -72,7 +72,7 @@ const folderOptions = computed<FolderOption[]>(() => {
         byParent.set(f.parentId, arr);
     }
     for (const arr of byParent.values()) {
-        arr.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+        arr.sort((a, b) => compareFolderNames(a.name, b.name));
     }
     const out: FolderOption[] = [{ id: '__root__', label: 'Sin carpeta', depth: 0 }];
     const walk = (parentId: string | null, depth: number): void => {
