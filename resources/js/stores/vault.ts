@@ -267,13 +267,30 @@ export const useVaultStore = defineStore('vault', () => {
         folder.parentId = parentId;
     }
 
+    /** Ruta completa de una carpeta ("Trabajo / Bancos"), o null si no hay carpeta. */
+    function folderPath(id: string | null): string | null {
+        if (!id) return null;
+        const names: string[] = [];
+        let cursor: string | null = id;
+        let steps = 0;
+        while (cursor && ++steps < 10000) {
+            const folder = folders.value.find((f) => f.id === cursor);
+            if (!folder) break;
+            names.unshift(folder.name);
+            cursor = folder.parentId;
+        }
+        return names.length ? names.join(' / ') : null;
+    }
+
+    /** Una carpeta está vacía si no tiene subcarpetas ni claves activas. */
+    function isFolderEmpty(id: string): boolean {
+        return !folders.value.some((f) => f.parentId === id) && !entries.value.some((e) => e.folderId === id);
+    }
+
+    /** Solo borra carpetas vacías (el servidor también lo exige). */
     async function deleteFolder(id: string): Promise<void> {
         await api.delete(`/folders/${id}`);
         folders.value = folders.value.filter((f) => f.id !== id);
-        // Las entradas de esa carpeta quedaron sin carpeta (nullOnDelete en el server).
-        entries.value.forEach((e) => {
-            if (e.folderId === id) e.folderId = null;
-        });
         if (filter.value.type === 'folder' && filter.value.id === id) filter.value = { type: 'all' };
     }
 
@@ -487,6 +504,8 @@ export const useVaultStore = defineStore('vault', () => {
         deleteFolder,
         moveFolder,
         isDescendantFolder,
+        folderPath,
+        isFolderEmpty,
         createTag,
         deleteTag,
         tagById,

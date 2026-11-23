@@ -169,15 +169,30 @@ function onFolderSelect(node: TreeNode): void {
 // --- Menú contextual de carpetas ---
 const folderMenu = ref<InstanceType<typeof ContextMenu>>();
 const menuFolderId = ref<string | null>(null);
-const menuItems: MenuItem[] = [
-    { label: 'Nueva subcarpeta', icon: 'pi pi-plus', command: () => openDialog('subfolder') },
-    { label: 'Renombrar', icon: 'pi pi-pencil', command: () => openDialog('rename') },
-    { label: 'Eliminar', icon: 'pi pi-trash', command: () => removeFolder() },
-];
+// "Eliminar" solo se habilita si la carpeta está vacía (sin claves ni subcarpetas).
+const menuItems = computed<MenuItem[]>(() => {
+    const empty = menuFolderId.value ? vault.isFolderEmpty(menuFolderId.value) : false;
+    return [
+        { label: 'Nueva subcarpeta', icon: 'pi pi-plus', command: () => openDialog('subfolder') },
+        { label: 'Renombrar', icon: 'pi pi-pencil', command: () => openDialog('rename') },
+        {
+            label: empty ? 'Eliminar' : 'Eliminar (solo si está vacía)',
+            icon: 'pi pi-trash',
+            disabled: !empty,
+            command: () => removeFolder(),
+        },
+    ];
+});
 
 function onFolderContext(event: { originalEvent: Event; node: TreeNode }): void {
     menuFolderId.value = event.node.key as string;
     folderMenu.value?.show(event.originalEvent);
+}
+
+/** Botón "⋮" de un nodo: abre el mismo menú que el clic derecho (en mobile no hay clic derecho). */
+function openFolderMenu(event: Event, key: string): void {
+    menuFolderId.value = key;
+    folderMenu.value?.show(event);
 }
 
 // --- Diálogo nueva/renombrar carpeta ---
@@ -206,6 +221,7 @@ async function saveFolder(): Promise<void> {
     try {
         if (dialogMode.value === 'rename' && menuFolderId.value) {
             await vault.renameFolder(menuFolderId.value, name);
+            toast.add({ severity: 'success', summary: `Carpeta renombrada a "${name}"`, life: 2500 });
         } else if (dialogMode.value === 'subfolder' && menuFolderId.value) {
             await vault.createFolder(name, menuFolderId.value);
         } else {
@@ -220,14 +236,36 @@ async function saveFolder(): Promise<void> {
 function removeFolder(): void {
     if (!menuFolderId.value) return;
     const id = menuFolderId.value;
+    const name = vault.folders.find((f) => f.id === id)?.name ?? 'la carpeta';
+    if (!vault.isFolderEmpty(id)) {
+        toast.add({
+            severity: 'warn',
+            summary: 'La carpeta no está vacía',
+            detail: 'Mové o eliminá sus claves y subcarpetas antes de borrarla.',
+            life: 4000,
+        });
+        return;
+    }
     confirm.require({
-        message: 'Las entradas de esta carpeta quedarán sin carpeta (no se borran). ¿Eliminar?',
+        message: `¿Eliminar la carpeta "${name}"?`,
         header: 'Eliminar carpeta',
         icon: 'pi pi-exclamation-triangle',
         rejectLabel: 'Cancelar',
         acceptLabel: 'Eliminar',
         acceptClass: 'p-button-danger',
-        accept: () => vault.deleteFolder(id),
+        accept: async () => {
+            try {
+                await vault.deleteFolder(id);
+                toast.add({ severity: 'success', summary: `Carpeta "${name}" eliminada`, life: 2500 });
+            } catch (err: any) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'No se pudo eliminar la carpeta',
+                    detail: err?.response?.data?.message ?? 'Probá de nuevo.',
+                    life: 4000,
+                });
+            }
+        },
     });
 }
 
@@ -320,6 +358,13 @@ function selectTag(id: string): void {
                             v-tooltip.top="'Nueva subcarpeta'"
                             @click.stop="addSubfolder(node.key as string)"
                         ><i class="pi pi-plus text-xs" /></button>
+                        <button
+                            type="button"
+                            class="shrink-0 rounded p-0.5 text-surface-400 opacity-0 hover:bg-surface-200 hover:text-primary group-hover:opacity-100 [@media(hover:none)]:opacity-100 dark:hover:bg-surface-700"
+                            v-tooltip.top="'Renombrar, eliminar…'"
+                            aria-label="Acciones de la carpeta"
+                            @click.stop="openFolderMenu($event, node.key as string)"
+                        ><i class="pi pi-ellipsis-v text-xs" /></button>
                     </span>
                 </template>
             </Tree>

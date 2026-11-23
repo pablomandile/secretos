@@ -198,6 +198,48 @@ class VaultTest extends TestCase
         $this->assertDatabaseHas('folders', ['id' => $folderId]);
     }
 
+    public function test_renombrar_carpeta_conserva_su_padre(): void
+    {
+        $user = User::factory()->create();
+        $parent = $this->makeFolder($user);
+        $child = $this->makeFolder($user, ['parent_id' => $parent->id]);
+
+        $newName = $this->cipher('renombrada');
+        $this->actingAs($user)->putJson("/api/folders/{$child->id}", ['name' => $newName])
+            ->assertOk();
+
+        $child->refresh();
+        $this->assertSame($newName, $child->name);
+        $this->assertSame($parent->id, $child->parent_id);
+    }
+
+    public function test_solo_se_borra_una_carpeta_vacia(): void
+    {
+        $user = User::factory()->create();
+
+        // Con una clave adentro: no se borra.
+        $withEntry = $this->makeFolder($user);
+        $entry = $this->makeEntry($user, ['folder_id' => $withEntry->id]);
+        $this->actingAs($user)->deleteJson("/api/folders/{$withEntry->id}")->assertStatus(422);
+        $this->assertDatabaseHas('folders', ['id' => $withEntry->id]);
+
+        // Con una subcarpeta: no se borra.
+        $withChild = $this->makeFolder($user);
+        $this->makeFolder($user, ['parent_id' => $withChild->id]);
+        $this->actingAs($user)->deleteJson("/api/folders/{$withChild->id}")->assertStatus(422);
+        $this->assertDatabaseHas('folders', ['id' => $withChild->id]);
+
+        // Si la única clave está en la papelera, cuenta como vacía y la clave queda sin carpeta.
+        $entry->delete();
+        $this->actingAs($user)->deleteJson("/api/folders/{$withEntry->id}")->assertNoContent();
+        $this->assertDatabaseMissing('folders', ['id' => $withEntry->id]);
+        $this->assertNull(\App\Models\Entry::withTrashed()->find($entry->id)->folder_id);
+
+        // Una carpeta de otro usuario no se toca.
+        $foreign = $this->makeFolder(User::factory()->create());
+        $this->actingAs($user)->deleteJson("/api/folders/{$foreign->id}")->assertNotFound();
+    }
+
     public function test_requiere_autenticacion(): void
     {
         $this->getJson('/api/vault')->assertUnauthorized();

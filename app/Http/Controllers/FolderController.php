@@ -52,12 +52,19 @@ class FolderController extends Controller
     }
 
     /**
-     * Al borrar: las subcarpetas pasan a raíz y las entradas quedan sin carpeta
-     * (nullOnDelete en las FK). No se borran entradas.
+     * Solo se borra una carpeta vacía: sin subcarpetas ni entradas activas.
+     * Las entradas que estén en la papelera quedan sin carpeta (nullOnDelete
+     * en la FK), así que si se restauran aparecen en "Sin carpeta".
      */
     public function destroy(Request $request, string $folder): JsonResponse
     {
-        $request->user()->folders()->findOrFail($folder)->delete();
+        $model = $request->user()->folders()->findOrFail($folder);
+
+        if ($model->children()->exists() || $model->entries()->exists()) {
+            abort(422, 'Solo se puede eliminar una carpeta vacía (sin claves ni subcarpetas).');
+        }
+
+        $model->delete();
 
         return response()->json(null, 204);
     }

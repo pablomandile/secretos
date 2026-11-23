@@ -36,6 +36,11 @@ watch(() => vault.filter, () => { selected.value = []; }, { deep: true });
 // Al apagar el modo selección, limpiamos lo que hubiera marcado.
 watch(() => props.selectionMode, (on) => { if (!on) selected.value = []; });
 
+// Orden de la columna "Archivado en": por ruta de carpeta; las sin carpeta al final.
+function folderSortKey(entry: DecryptedEntry): string {
+    return vault.folderPath(entry.folderId) ?? String.fromCharCode(0xffff);
+}
+
 function hostname(url: string): string {
     try {
         return new URL(url).hostname;
@@ -179,6 +184,16 @@ function openRowMenu(event: Event, entry: DecryptedEntry): void {
 
             <Column field="username" header="Usuario" />
 
+            <Column :field="folderSortKey" header="Archivado en" sortable>
+                <template #body="{ data }">
+                    <span v-if="data.folderId" class="flex items-center gap-1.5 text-sm" :title="vault.folderPath(data.folderId) ?? ''">
+                        <i class="pi pi-folder text-xs text-surface-400" />
+                        <span class="truncate">{{ vault.folderPath(data.folderId) }}</span>
+                    </span>
+                    <span v-else class="text-sm text-surface-400">Sin carpeta</span>
+                </template>
+            </Column>
+
             <Column header="Etiquetas">
                 <template #body="{ data }">
                     <div class="flex flex-wrap gap-1">
@@ -257,6 +272,10 @@ function openRowMenu(event: Event, entry: DecryptedEntry): void {
                         <div class="truncate font-medium">{{ entry.title }}</div>
                         <div v-if="entry.username" class="truncate text-sm text-surface-500">{{ entry.username }}</div>
                         <div v-else-if="entry.url" class="truncate text-xs text-surface-400">{{ hostname(entry.url) }}</div>
+                        <div v-if="entry.folderId" class="flex min-w-0 items-center gap-1 text-xs text-surface-400">
+                            <i class="pi pi-folder shrink-0 text-[10px]" />
+                            <span class="truncate">{{ vault.folderPath(entry.folderId) }}</span>
+                        </div>
                         <div v-if="entry.tagIds.length" class="mt-1 flex flex-wrap gap-1">
                             <Tag
                                 v-for="tagId in entry.tagIds"
